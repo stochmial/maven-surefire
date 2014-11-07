@@ -698,6 +698,24 @@ public abstract class AbstractSurefireMojo
     private String[] dependenciesToScan;
 
     /**
+     * Read tests list from external source provided in externalSourceUrl parameter.
+     * </p>
+     * Test names will be lazily read from given url until it stops returning any value.
+     *
+     * @since 2.19
+     */
+    @Parameter( property = "testsFromExternalSource" )
+    private boolean testsFromExternalSource;
+
+    /**
+     * External source URL to read test class names during execution.
+     *
+     * @since 2.19
+     */
+    @Parameter( property = "externalSourceUrl" )
+    private String externalSourceUrl;
+
+    /**
      *
      */
     @Component
@@ -1477,7 +1495,7 @@ public abstract class AbstractSurefireMojo
 
         return new ProviderConfiguration( directoryScannerParameters, runOrderParameters, actualFailIfNoTests,
                                           reporterConfiguration, testNg, testSuiteDefinition, providerProperties, null,
-                                          false );
+                                          false, testsFromExternalSource, externalSourceUrl );
     }
 
     public String getStatisticsFileName( String configurationHash )
