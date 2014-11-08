@@ -42,7 +42,10 @@ import java.util.List;
 public class LazySocketTestToRun
                 extends TestsToRun
 {
+
     private static final String WANT_MORE = "" + ForkingRunListener.BOOTERCODE_NEXT_TEST + ",0,want more!\n";
+
+    public static final int PAUSE_BETWEEN_RETRIES = 1000;
 
     private final List<Class> workQueue = new ArrayList<Class>();
 
@@ -71,38 +74,8 @@ public class LazySocketTestToRun
         {
             if ( !finished )
             {
-                String nextTestName = null;
-                int tries = 0;
-                while ( true )
-                {
-                    try
-                    {
-                        nextTestName = fetchNextTestName();
-                        break;
-                    }
-                    catch ( IOException e )
-                    {
-                        if ( tries < retries )
-                        {
-                            tries++;
-                            System.out.println( "Error connecting to external test source. Retry in 1 second." );
-                            try
-                            {
-                                Thread.sleep( 1000 );
-                            }
-                            catch ( InterruptedException e1 )
-                            {
-                                throw new RuntimeException( e1 );
-                            }
-                        }
-                        else
-                        {
-                            throw e;
-                        }
-                    }
-                }
-                if ( nextTestName != null && nextTestName.trim().length() > 0
-                                && !nextTestName.trim().equalsIgnoreCase( "null" ) )
+                String nextTestName = tryToGetNextTestName();
+                if ( !nothingMoreToProcess( nextTestName ) )
                 {
                     Class testClass = loadTestClass( nextTestName );
                     workQueue.add( testClass );
@@ -113,6 +86,53 @@ public class LazySocketTestToRun
                 }
             }
             return workQueue.size() > pos;
+        }
+    }
+
+    private boolean nothingMoreToProcess ( String nextTestName )
+    {
+        return nextTestName == null || nextTestName.trim().length() == 0
+                        || nextTestName.trim().equalsIgnoreCase( "null" );
+    }
+
+    private String tryToGetNextTestName ()
+                    throws IOException
+    {
+        String nextTestName;
+        int tries = 0;
+        while ( true )
+        {
+            try
+            {
+                nextTestName = fetchNextTestName();
+                break;
+            }
+            catch ( IOException e )
+            {
+                if ( tries < retries )
+                {
+                    tries++;
+                    System.out.println( "Error connecting to external test source. Retry in 1 second." );
+                    sleep( PAUSE_BETWEEN_RETRIES );
+                }
+                else
+                {
+                    throw e;
+                }
+            }
+        }
+        return nextTestName;
+    }
+
+    private void sleep ( int time )
+    {
+        try
+        {
+            Thread.sleep( time );
+        }
+        catch ( InterruptedException e1 )
+        {
+            throw new RuntimeException( e1 );
         }
     }
 
