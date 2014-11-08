@@ -45,7 +45,7 @@ public class ExternalTestToRunFactory
 
             if ( SOCKET.equals( url.getScheme() ) )
             {
-                return new LazySocketTestToRun( url );
+                return new LazySocketTestToRun( url, 3 );
             }
             else
             {

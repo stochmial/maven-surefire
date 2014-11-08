@@ -50,10 +50,18 @@ public class LazySocketTestToRun
 
     private final URI url;
 
+    private final int retries;
+
     public LazySocketTestToRun ( URI url )
+    {
+        this( url, 0 );
+    }
+
+    public LazySocketTestToRun ( URI url, int retries )
     {
         super( Collections.<Class>emptyList() );
         this.url = url;
+        this.retries = retries;
     }
 
     private boolean hasNextTextClass ( int pos )
@@ -63,7 +71,36 @@ public class LazySocketTestToRun
         {
             if ( !finished )
             {
-                String nextTestName = fetchNextTestName();
+                String nextTestName = null;
+                int tries = 0;
+                while ( true )
+                {
+                    try
+                    {
+                        nextTestName = fetchNextTestName();
+                        break;
+                    }
+                    catch ( IOException e )
+                    {
+                        if ( tries < retries )
+                        {
+                            tries++;
+                            System.out.println( "Error connecting to external test source. Retry in 1 second." );
+                            try
+                            {
+                                Thread.sleep( 1000 );
+                            }
+                            catch ( InterruptedException e1 )
+                            {
+                                throw new RuntimeException( e1 );
+                            }
+                        }
+                        else
+                        {
+                            throw e;
+                        }
+                    }
+                }
                 if ( nextTestName != null && nextTestName.trim().length() > 0
                                 && !nextTestName.trim().equalsIgnoreCase( "null" ) )
                 {
