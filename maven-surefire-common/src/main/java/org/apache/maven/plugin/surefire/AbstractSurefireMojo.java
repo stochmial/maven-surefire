@@ -698,9 +698,10 @@ public abstract class AbstractSurefireMojo
     private String[] dependenciesToScan;
 
     /**
-     * Read tests list from external source provided in externalSourceUrl parameter.
-     * </p>
-     * Test names will be lazily read from given url until it stops returning any value.
+     * Read tests list from external source provided in externalSourceUrl parameter instead of using
+     * test class discovery mechanisms.
+     * <p/>
+     * Works only in fork mode.
      *
      * @since 2.19
      */
@@ -709,7 +710,19 @@ public abstract class AbstractSurefireMojo
 
     /**
      * External source URL to read test class names during execution.
-     *
+     * <p/>
+     * Supported protocols:
+     * <ul>
+     *     <li>socket - fetch test class names from external system via simple socket protocol.<br/>
+     *         URL format - socket://[host]:[port]<br/>
+     *         Messaging:
+     *         <ul>
+     *             <li>client sends <code>78,0,want more!</code> terminated by new line</li>
+     *             <li>server returns test class name terminated by new line or empty string if no more tests</li>
+     *         </ul>
+     *         Client is requesting data lazily, just before executing next test.
+     *     </li>
+     * </ul>
      * @since 2.19
      */
     @Parameter( property = "externalSourceUrl" )
