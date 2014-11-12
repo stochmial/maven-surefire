@@ -705,7 +705,7 @@ public abstract class AbstractSurefireMojo
      *
      * @since 2.19
      */
-    @Parameter( property = "testExternalSourceUrl" )
+    @Parameter( property = "testsFromExternalSource" )
     private boolean testsFromExternalSource;
 
     /**
