@@ -1,12 +1,5 @@
 package org.apache.maven.surefire.booter;
 
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Scanner;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -25,43 +18,65 @@ import java.util.Scanner;
  * specific language governing permissions and limitations
  * under the License.
  */
-public class HostnameResolver {
 
-    static String resolveHostname() {
-        try {
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Scanner;
+
+/**
+ * Utility class to resolve hostname as reliably as possible.
+ */
+public class HostnameResolver
+{
+
+    static String resolveHostname()
+    {
+        try
+        {
             return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException uhe) {
-            try {
+        }
+        catch ( UnknownHostException uhe )
+        {
+            try
+            {
                 return readHostnameWithOsCommands();
-            } catch (IOException ioe) {
+            }
+            catch ( IOException ioe )
+            {
                 uhe.printStackTrace();
                 ioe.printStackTrace();
-                throw new IllegalStateException("Cannot get hostname neither using  " +
-                        "InetAddress.getLocalHost().getHostName() nor executing os 'hostname' command. " +
-                        "Check error output for details.");
+                throw new IllegalStateException( "Cannot get hostname neither using  "
+                        + "InetAddress.getLocalHost().getHostName() nor executing os 'hostname' command. "
+                        + "Check error output for details." );
             }
         }
     }
 
-    private static String readHostnameWithOsCommands() throws IOException {
-        final String os = System.getProperty("os.name").toLowerCase();
+    private static String readHostnameWithOsCommands() throws IOException
+    {
+        final String os = System.getProperty( "os.name" ).toLowerCase();
 
-        if (os.contains("win")) {
-            return execCmd("hostname");
+        if ( os.contains( "win" ) )
+        {
+            return execCmd( "hostname" );
         }
-        if (os.contains("nix") || os.contains("nux")) {
-            return execCmd("hostname");
+        if ( os.contains( "nix" ) || os.contains( "nux" ) )
+        {
+            return execCmd( "hostname" );
         }
-        throw new IOException(String.format("Unsupported OS '%s'", os));
+        throw new IOException( String.format( "Unsupported OS '%s'", os ) );
     }
 
 
-    private static String execCmd(String cmd) throws IOException {
-        Scanner s = new Scanner(Runtime.getRuntime().exec(cmd).getInputStream()).useDelimiter("\\A");
-        if (s.hasNext()) {
+    private static String execCmd( String cmd ) throws IOException
+    {
+        Scanner s = new Scanner( Runtime.getRuntime().exec( cmd ).getInputStream() ).useDelimiter( "\\A" );
+        if ( s.hasNext() )
+        {
             return s.next();
         }
-        throw new IOException("Empty result for command: " + cmd);
+        throw new IOException( "Empty result for command: " + cmd );
     }
 
 }
