@@ -40,11 +40,11 @@ import java.util.List;
  * @author Marek Piechut
  */
 public class LazySocketTestToRun
-                extends TestsToRun
+        extends TestsToRun
 {
-    private static final String WANT_MORE = "get_next," + HostnameResolver.resolveHostname() + "\n";
-
     public static final int PAUSE_BETWEEN_RETRIES = 1000;
+
+    private static final String HOSTNAME = HostnameResolver.resolveHostname();
 
     private final List<Class> workQueue = new ArrayList<Class>();
 
@@ -54,20 +54,20 @@ public class LazySocketTestToRun
 
     private final int retries;
 
-    public LazySocketTestToRun ( URI url )
+    public LazySocketTestToRun( URI url )
     {
         this( url, 0 );
     }
 
-    public LazySocketTestToRun ( URI url, int retries )
+    public LazySocketTestToRun( URI url, int retries )
     {
         super( Collections.<Class>emptyList() );
         this.url = url;
         this.retries = retries;
     }
 
-    private boolean hasNextTextClass ( int pos )
-                    throws IOException
+    private boolean hasNextTextClass( int pos )
+            throws IOException
     {
         synchronized ( workQueue )
         {
@@ -88,14 +88,14 @@ public class LazySocketTestToRun
         }
     }
 
-    private boolean nothingMoreToProcess ( String nextTestName )
+    private boolean nothingMoreToProcess( String nextTestName )
     {
         return nextTestName == null || nextTestName.trim().length() == 0
-                        || nextTestName.trim().equalsIgnoreCase( "null" );
+                || nextTestName.trim().equalsIgnoreCase( "null" );
     }
 
-    private String tryToGetNextTestName ()
-                    throws IOException
+    private String tryToGetNextTestName()
+            throws IOException
     {
         String nextTestName;
         int tries = 0;
@@ -123,7 +123,7 @@ public class LazySocketTestToRun
         return nextTestName;
     }
 
-    private void sleep ( int time )
+    private void sleep( int time )
     {
         try
         {
@@ -135,8 +135,15 @@ public class LazySocketTestToRun
         }
     }
 
-    private String fetchNextTestName ()
-                    throws IOException
+    private String createRequestJson( TestRequest testRequest )
+    {
+        return String.format( "{\"hostname\":\"%s\",\"request\":\"%s\"}", testRequest.getHostname(),
+                testRequest.getRequestType() );
+    }
+
+
+    private String fetchNextTestName()
+            throws IOException
     {
         String testName = null;
         Socket socket = new Socket( url.getHost(), url.getPort() );
@@ -145,7 +152,7 @@ public class LazySocketTestToRun
         try
         {
             out = new BufferedWriter( new OutputStreamWriter( socket.getOutputStream() ) );
-            out.write( WANT_MORE );
+            out.write( createRequestJson( new TestRequest( HOSTNAME, "GetNext" ) ) );
             out.flush();
             in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
             testName = in.readLine();
@@ -174,7 +181,7 @@ public class LazySocketTestToRun
         return testName;
     }
 
-    private Class getItem ( int pos )
+    private Class getItem( int pos )
     {
         synchronized ( workQueue )
         {
@@ -182,13 +189,13 @@ public class LazySocketTestToRun
         }
     }
 
-    private Class loadTestClass ( String name )
+    private Class loadTestClass( String name )
     {
         return ReflectionUtils.loadClass( Thread.currentThread().getContextClassLoader(), name );
     }
 
     @Override
-    public String toString ()
+    public String toString()
     {
         StringBuilder sb = new StringBuilder( "LazySocketTestsToRun: " );
         sb.append( '(' ).append( url ).append( "):" );
@@ -201,23 +208,23 @@ public class LazySocketTestToRun
     }
 
     @Override
-    public Iterator<Class> iterator ()
+    public Iterator<Class> iterator()
     {
         return new NextExternalTestIterator();
     }
 
     @Override
-    public boolean allowEagerReading ()
+    public boolean allowEagerReading()
     {
         return false;
     }
 
     private class NextExternalTestIterator
-                    implements Iterator<Class>
+            implements Iterator<Class>
     {
         private int pos = -1;
 
-        public boolean hasNext ()
+        public boolean hasNext()
         {
             try
             {
@@ -229,14 +236,37 @@ public class LazySocketTestToRun
             }
         }
 
-        public Class next ()
+        public Class next()
         {
             return getItem( ++pos );
         }
 
-        public void remove ()
+        public void remove()
         {
             throw new UnsupportedOperationException();
         }
+    }
+
+    private class TestRequest
+    {
+        private String hostname;
+        private String requestType;
+
+        public TestRequest( String hostname, String requestType )
+        {
+            this.hostname = hostname;
+            this.requestType = requestType;
+        }
+
+        public String getHostname()
+        {
+            return hostname;
+        }
+
+        public String getRequestType()
+        {
+            return requestType;
+        }
+
     }
 }
