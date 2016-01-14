@@ -42,8 +42,8 @@ import java.util.List;
 public class LazySocketTestToRun
                 extends TestsToRun
 {
-
-    private static final String WANT_MORE = "" + ForkingRunListener.BOOTERCODE_NEXT_TEST + ",0,want more!\n";
+    private static final String WANT_MORE = "" + ForkingRunListener.BOOTERCODE_NEXT_TEST + ",0,want more!,"
+            + HostnameResolver.resolveHostname() + "\n";
 
     public static final int PAUSE_BETWEEN_RETRIES = 1000;
 
