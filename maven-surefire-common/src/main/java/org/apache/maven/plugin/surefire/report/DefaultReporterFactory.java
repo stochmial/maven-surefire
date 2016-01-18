@@ -24,7 +24,9 @@ import org.apache.maven.plugin.surefire.runorder.StatisticsReporter;
 import org.apache.maven.surefire.report.DefaultDirectConsoleReporter;
 import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.report.RunListener;
+import org.apache.maven.surefire.report.RunListenerTestSetResultSocketDecorator;
 import org.apache.maven.surefire.report.RunStatistics;
+import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.report.StackTraceWriter;
 import org.apache.maven.surefire.suite.RunResult;
 
@@ -43,7 +45,7 @@ import java.util.TreeMap;
  * @author Kristian Rosenvold
  */
 public class DefaultReporterFactory
-    implements ReporterFactory
+        implements ReporterFactory
 {
 
     private RunStatistics globalStats = new RunStatistics();
@@ -53,7 +55,7 @@ public class DefaultReporterFactory
     private final StatisticsReporter statisticsReporter;
 
     private final List<TestSetRunListener> listeners =
-        Collections.synchronizedList( new ArrayList<TestSetRunListener>() );
+            Collections.synchronizedList( new ArrayList<TestSetRunListener>() );
 
     // from "<testclass>.<testmethod>" -> statistics about all the runs for flaky tests
     private Map<String, List<TestMethodStats>> flakyTests;
@@ -86,16 +88,31 @@ public class DefaultReporterFactory
         }
     }
 
+    private RunListener decorateRunListener( RunListener runListener )
+    {
+        RunListener result = runListener;
+        if ( reportConfiguration.useExternalReportingServerUrl() )
+        {
+            SocketCommunicationEngine communicationEngine = new SocketCommunicationEngine(
+                    reportConfiguration.getExternalReportingServerUri(), 3 );
+            result = new RunListenerTestSetResultSocketDecorator( communicationEngine, result );
+        }
+        return result;
+    }
+
     public RunListener createTestSetRunListener()
     {
         TestSetRunListener testSetRunListener =
-            new TestSetRunListener( reportConfiguration.instantiateConsoleReporter(),
-                                    reportConfiguration.instantiateFileReporter(),
-                                    reportConfiguration.instantiateStatelessXmlReporter(),
-                                    reportConfiguration.instantiateConsoleOutputFileReporter(), statisticsReporter,
-                                    reportConfiguration.isTrimStackTrace(),
-                                    ConsoleReporter.PLAIN.equals( reportConfiguration.getReportFormat() ),
-                                    reportConfiguration.isBriefOrPlainFormat() );
+                new TestSetRunListener( reportConfiguration.instantiateConsoleReporter(),
+                        reportConfiguration.instantiateFileReporter(),
+                        reportConfiguration.instantiateStatelessXmlReporter(),
+                        reportConfiguration.instantiateConsoleOutputFileReporter(), statisticsReporter,
+                        reportConfiguration.isTrimStackTrace(),
+                        ConsoleReporter.PLAIN.equals( reportConfiguration.getReportFormat() ),
+                        reportConfiguration.isBriefOrPlainFormat() );
+
+        testSetRunListener = ( TestSetRunListener ) decorateRunListener( testSetRunListener );
+
         listeners.add( testSetRunListener );
         return testSetRunListener;
     }
@@ -165,12 +182,12 @@ public class DefaultReporterFactory
      * Get the result of a test based on all its runs. If it has success and failures/errors, then it is a flake;
      * if it only has errors or failures, then count its result based on its first run
      *
-     * @param reportEntryList the list of test run report type for a given test
+     * @param reportEntryList        the list of test run report type for a given test
      * @param rerunFailingTestsCount configured rerun count for failing tests
      * @return the type of test result
      */
     // Use default visibility for testing
-    static TestResultType getTestResultType( List<ReportEntryType> reportEntryList, int rerunFailingTestsCount  )
+    static TestResultType getTestResultType( List<ReportEntryType> reportEntryList, int rerunFailingTestsCount )
     {
         if ( reportEntryList == null || reportEntryList.isEmpty() )
         {
@@ -241,7 +258,7 @@ public class DefaultReporterFactory
             for ( TestMethodStats methodStats : testMethodStats )
             {
                 List<TestMethodStats> currentMethodStats =
-                    mergedTestHistoryResult.get( methodStats.getTestClassMethodName() );
+                        mergedTestHistoryResult.get( methodStats.getTestClassMethodName() );
                 if ( currentMethodStats == null )
                 {
                     currentMethodStats = new ArrayList<TestMethodStats>();
@@ -271,7 +288,7 @@ public class DefaultReporterFactory
             }
 
             TestResultType resultType = getTestResultType( resultTypeList,
-                                                           reportConfiguration.getRerunFailingTestsCount() );
+                    reportConfiguration.getRerunFailingTestsCount() );
 
             switch ( resultType )
             {

@@ -19,14 +19,15 @@ package org.apache.maven.surefire.booter;
  * under the License.
  */
 
-import java.io.File;
-import java.util.List;
-import java.util.Properties;
 import org.apache.maven.surefire.report.ReporterConfiguration;
 import org.apache.maven.surefire.testset.DirectoryScannerParameters;
 import org.apache.maven.surefire.testset.RunOrderParameters;
 import org.apache.maven.surefire.testset.TestArtifactInfo;
 import org.apache.maven.surefire.testset.TestRequest;
+
+import java.io.File;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Represents the surefire configuration that passes all the way into the provider
@@ -66,13 +67,18 @@ public class ProviderConfiguration
 
     private final String externalSourceUrl;
 
+    private final boolean reportToExternalService;
+
+    private final String testResultsReportingUrl;
+
     @SuppressWarnings( "checkstyle:parameternumber" )
-    public ProviderConfiguration ( DirectoryScannerParameters directoryScannerParameters,
-                                   RunOrderParameters runOrderParameters, boolean failIfNoTests,
-                                   ReporterConfiguration reporterConfiguration, TestArtifactInfo testArtifact,
-                                   TestRequest testSuiteDefinition, Properties providerProperties,
-                                   TypeEncodedValue typeEncodedTestSet, boolean readTestsFromInStream,
-                                   boolean testsFromExternalSource, String externalSourceUrl )
+    public ProviderConfiguration( DirectoryScannerParameters directoryScannerParameters,
+                                  RunOrderParameters runOrderParameters, boolean failIfNoTests,
+                                  ReporterConfiguration reporterConfiguration, TestArtifactInfo testArtifact,
+                                  TestRequest testSuiteDefinition, Properties providerProperties,
+                                  TypeEncodedValue typeEncodedTestSet, boolean readTestsFromInStream,
+                                  boolean testsFromExternalSource, String externalSourceUrl,
+                                  boolean reportToExternalService, String testResultsReportingUrl )
     {
         this.runOrderParameters = runOrderParameters;
         this.providerProperties = providerProperties;
@@ -85,6 +91,8 @@ public class ProviderConfiguration
         this.readTestsFromInStream = readTestsFromInStream;
         this.testsFromExternalSource = testsFromExternalSource;
         this.externalSourceUrl = externalSourceUrl;
+        this.reportToExternalService = reportToExternalService;
+        this.testResultsReportingUrl = testResultsReportingUrl;
     }
 
 
@@ -151,13 +159,23 @@ public class ProviderConfiguration
         return readTestsFromInStream;
     }
 
-    public boolean isTestsFromExternalSource ()
+    public boolean isTestsFromExternalSource()
     {
         return testsFromExternalSource;
     }
 
-    public String getExternalSourceUrl ()
+    public String getExternalSourceUrl()
     {
         return externalSourceUrl;
+    }
+
+    public boolean isReportToExternalService()
+    {
+        return reportToExternalService;
+    }
+
+    public String getTestResultsReportingUrl()
+    {
+        return testResultsReportingUrl;
     }
 }

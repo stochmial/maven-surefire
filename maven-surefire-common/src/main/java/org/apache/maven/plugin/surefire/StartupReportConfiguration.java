@@ -22,6 +22,7 @@ package org.apache.maven.plugin.surefire;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Properties;
+
 import org.apache.maven.plugin.surefire.report.ConsoleOutputFileReporter;
 import org.apache.maven.plugin.surefire.report.ConsoleReporter;
 import org.apache.maven.plugin.surefire.report.DirectConsoleOutput;
@@ -66,6 +67,8 @@ public class StartupReportConfiguration
 
     private final int rerunFailingTestsCount;
 
+    private final String externalReportingServerUri;
+
     private final Properties testVmSystemProperties = new Properties();
 
     public static final String BRIEF_REPORT_FORMAT = ConsoleReporter.BRIEF;
@@ -77,7 +80,7 @@ public class StartupReportConfiguration
                                        boolean redirectTestOutputToFile, boolean disableXmlReport,
                                        @Nonnull File reportsDirectory, boolean trimStackTrace, String reportNameSuffix,
                                        String configurationHash, boolean requiresRunHistory,
-                                       int rerunFailingTestsCount )
+                                       int rerunFailingTestsCount, String externalReportingServerUri )
     {
         this.useFile = useFile;
         this.printSummary = printSummary;
@@ -92,20 +95,32 @@ public class StartupReportConfiguration
         this.originalSystemOut = System.out;
         this.originalSystemErr = System.err;
         this.rerunFailingTestsCount = rerunFailingTestsCount;
+        this.externalReportingServerUri = externalReportingServerUri;
     }
+
+//    @SuppressWarnings( "checkstyle:parameternumber" )
+//    public StartupReportConfiguration( boolean useFile, boolean printSummary, String reportFormat,
+//                                      boolean redirectTestOutputToFile, boolean disableXmlReport,
+//                                      @Nonnull File reportsDirectory, boolean trimStackTrace, String reportNameSuffix,
+//                                      String configurationHash, boolean requiresRunHistory,
+//                                      int rerunFailingTestsCount )
+//    {
+//        this( useFile, printSummary, reportFormat, redirectTestOutputToFile, disableXmlReport, reportsDirectory,
+//              trimStackTrace, reportNameSuffix, configurationHash, requiresRunHistory, rerunFailingTestsCount, null );
+//    }
 
     public static StartupReportConfiguration defaultValue()
     {
         File target = new File( "./target" );
         return new StartupReportConfiguration( true, true, "PLAIN", false, false, target, false, null, "TESTHASH",
-                                               false, 0 );
+                false, 0, null );
     }
 
     public static StartupReportConfiguration defaultNoXml()
     {
         File target = new File( "./target" );
         return new StartupReportConfiguration( true, true, "PLAIN", false, true, target, false, null, "TESTHASHxXML",
-                                               false, 0 );
+                false, 0, null );
     }
 
     public boolean isUseFile()
@@ -153,7 +168,7 @@ public class StartupReportConfiguration
         if ( !isDisableXmlReport() )
         {
             return new StatelessXmlReporter( reportsDirectory, reportNameSuffix, trimStackTrace,
-                                             rerunFailingTestsCount );
+                    rerunFailingTestsCount );
         }
         return null;
     }
@@ -237,4 +252,13 @@ public class StartupReportConfiguration
         return originalSystemOut;
     }
 
+    public boolean useExternalReportingServerUrl()
+    {
+        return externalReportingServerUri != null;
+    }
+
+    public String getExternalReportingServerUri()
+    {
+        return externalReportingServerUri;
+    }
 }

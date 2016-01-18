@@ -143,6 +143,14 @@ class BooterSerializer
             properties.setProperty( BooterConstants.TESTS_FROM_EXTERNAL_SOURCE_URL,
                                     externalSourceUrl );
         }
+        properties.setProperty( BooterConstants.REPORT_TO_EXTERNAL_SERVICE,
+                booterConfiguration.isReportToExternalService() );
+        String testResultsReportingUrl = booterConfiguration.getTestResultsReportingUrl();
+        if ( testResultsReportingUrl != null )
+        {
+            properties.setProperty( BooterConstants.TEST_RESULTS_REPORTING_URL,
+                    testResultsReportingUrl );
+        }
 
         return SystemPropertyManager.writePropertiesFile( properties,
                                                           forkConfiguration.getTempDirectory(), "surefire",

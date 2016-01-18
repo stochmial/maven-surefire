@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
 import org.apache.maven.surefire.report.ReporterConfiguration;
 import org.apache.maven.surefire.testset.DirectoryScannerParameters;
 import org.apache.maven.surefire.testset.RunOrderParameters;
@@ -52,7 +53,7 @@ public class BooterDeserializer
     private final PropertiesWrapper properties;
 
     public BooterDeserializer( InputStream inputStream )
-        throws IOException
+            throws IOException
     {
         properties = SystemPropertyManager.loadProperties( inputStream );
     }
@@ -65,7 +66,7 @@ public class BooterDeserializer
 
         final TypeEncodedValue typeEncodedTestForFork = properties.getTypeEncodedValue( FORKTESTSET );
         final boolean preferTestsFromInStream =
-            properties.getBooleanProperty( FORKTESTSET_PREFER_TESTS_FROM_IN_STREAM );
+                properties.getBooleanProperty( FORKTESTSET_PREFER_TESTS_FROM_IN_STREAM );
 
         final String requestedTest = properties.getProperty( REQUESTEDTEST );
         final String requestedTestMethod = properties.getProperty( REQUESTEDTESTMETHOD );
@@ -84,25 +85,28 @@ public class BooterDeserializer
 
         final boolean testsFromExternalSource = properties.getBooleanProperty( RUN_TESTS_FROM_EXTERNAL_SOURCE );
         final String externalSourceUrl = properties.getProperty( TESTS_FROM_EXTERNAL_SOURCE_URL );
+        final boolean reportToExternalService = properties.getBooleanProperty( REPORT_TO_EXTERNAL_SERVICE );
+        final String testResultsReportingUrl = properties.getProperty( TEST_RESULTS_REPORTING_URL );
 
         DirectoryScannerParameters dirScannerParams =
-            new DirectoryScannerParameters( testClassesDirectory, includesList, excludesList, specificTestsList,
-                                            properties.getBooleanObjectProperty( FAILIFNOTESTS ), runOrder );
+                new DirectoryScannerParameters( testClassesDirectory, includesList, excludesList, specificTestsList,
+                        properties.getBooleanObjectProperty( FAILIFNOTESTS ), runOrder );
 
         RunOrderParameters runOrderParameters = new RunOrderParameters( runOrder, runStatisticsFile );
 
         TestArtifactInfo testNg = new TestArtifactInfo( testNgVersion, testArtifactClassifier );
         TestRequest testSuiteDefinition =
-            new TestRequest( testSuiteXmlFiles, sourceDirectory, requestedTest, requestedTestMethod,
-                             rerunFailingTestsCount );
+                new TestRequest( testSuiteXmlFiles, sourceDirectory, requestedTest, requestedTestMethod,
+                        rerunFailingTestsCount );
 
         ReporterConfiguration reporterConfiguration =
-            new ReporterConfiguration( reportsDirectory, properties.getBooleanObjectProperty( ISTRIMSTACKTRACE ) );
+                new ReporterConfiguration( reportsDirectory, properties.getBooleanObjectProperty( ISTRIMSTACKTRACE ) );
 
         return new ProviderConfiguration( dirScannerParams, runOrderParameters,
-                                          properties.getBooleanProperty( FAILIFNOTESTS ), reporterConfiguration, testNg,
-                                          testSuiteDefinition, properties.getProperties(), typeEncodedTestForFork,
-                                          preferTestsFromInStream, testsFromExternalSource, externalSourceUrl );
+                properties.getBooleanProperty( FAILIFNOTESTS ), reporterConfiguration, testNg,
+                testSuiteDefinition, properties.getProperties(), typeEncodedTestForFork,
+                preferTestsFromInStream, testsFromExternalSource, externalSourceUrl,
+                reportToExternalService, testResultsReportingUrl );
     }
 
     public StartupConfiguration getProviderConfiguration()
@@ -112,11 +116,11 @@ public class BooterDeserializer
         String providerConfiguration = properties.getProperty( PROVIDER_CONFIGURATION );
 
         ClassLoaderConfiguration classLoaderConfiguration =
-            new ClassLoaderConfiguration( useSystemClassLoader, useManifestOnlyJar );
+                new ClassLoaderConfiguration( useSystemClassLoader, useManifestOnlyJar );
 
         ClasspathConfiguration classpathConfiguration = new ClasspathConfiguration( properties );
 
         return StartupConfiguration.inForkedVm( providerConfiguration, classpathConfiguration,
-                                                classLoaderConfiguration );
+                classLoaderConfiguration );
     }
 }

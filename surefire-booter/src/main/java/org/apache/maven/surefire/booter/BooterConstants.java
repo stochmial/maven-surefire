@@ -54,4 +54,6 @@ public final class BooterConstants
     public static final String RERUN_FAILING_TESTS_COUNT = "rerunFailingTestsCount";
     public static final String RUN_TESTS_FROM_EXTERNAL_SOURCE = "testsFromExternalSource";
     public static final String TESTS_FROM_EXTERNAL_SOURCE_URL = "externalSourceUrl";
+    public static final String REPORT_TO_EXTERNAL_SERVICE = "reportToExternalService";
+    public static final String TEST_RESULTS_REPORTING_URL = "testResultsReportingUrl";
 }

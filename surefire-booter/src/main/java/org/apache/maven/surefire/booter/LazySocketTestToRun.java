@@ -19,16 +19,10 @@ package org.apache.maven.surefire.booter;
  * under the License.
  */
 
+import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.util.ReflectionUtils;
 import org.apache.maven.surefire.util.TestsToRun;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.Socket;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -42,49 +36,62 @@ import java.util.List;
 public class LazySocketTestToRun
         extends TestsToRun
 {
-    public static final int PAUSE_BETWEEN_RETRIES = 1000;
+    public static final String JUST_WAIT = "WAIT";
 
-    private static final String HOSTNAME = HostnameResolver.resolveHostname();
+    public static final int WAIT_STEP_SECONDS = 30;
 
     private final List<Class> workQueue = new ArrayList<Class>();
 
     private boolean finished = false;
 
-    private final URI url;
+    private final SocketCommunicationEngine socketCommunicationEngine;
 
-    private final int retries;
 
-    public LazySocketTestToRun( URI url )
-    {
-        this( url, 0 );
-    }
-
-    public LazySocketTestToRun( URI url, int retries )
+    public LazySocketTestToRun( SocketCommunicationEngine socketCommunicationEngine )
     {
         super( Collections.<Class>emptyList() );
-        this.url = url;
-        this.retries = retries;
+        this.socketCommunicationEngine = socketCommunicationEngine;
     }
 
     private boolean hasNextTextClass( int pos )
-            throws IOException
     {
         synchronized ( workQueue )
         {
             if ( !finished )
             {
-                String nextTestName = tryToGetNextTestName();
-                if ( !nothingMoreToProcess( nextTestName ) )
+                String nextTestName = socketCommunicationEngine.sendRequest( "GetNext" );
+                if ( nothingMoreToProcess( nextTestName ) )
+                {
+                    finished = true;
+                }
+                else if ( justWait( nextTestName ) )
+                {
+                    sleep( WAIT_STEP_SECONDS );
+                }
+                else
                 {
                     Class testClass = loadTestClass( nextTestName );
                     workQueue.add( testClass );
                 }
-                else
-                {
-                    finished = true;
-                }
             }
             return workQueue.size() > pos;
+        }
+    }
+
+    private boolean justWait( String testName )
+    {
+        return JUST_WAIT.equals( testName );
+    }
+
+    private void sleep( int sec )
+    {
+        try
+        {
+            Thread.sleep( sec * 1000 );
+        }
+        catch ( InterruptedException e )
+        {
+            e.printStackTrace();
         }
     }
 
@@ -94,92 +101,6 @@ public class LazySocketTestToRun
                 || nextTestName.trim().equalsIgnoreCase( "null" );
     }
 
-    private String tryToGetNextTestName()
-            throws IOException
-    {
-        String nextTestName;
-        int tries = 0;
-        while ( true )
-        {
-            try
-            {
-                nextTestName = fetchNextTestName();
-                break;
-            }
-            catch ( IOException e )
-            {
-                if ( tries < retries )
-                {
-                    tries++;
-                    System.out.println( "Error connecting to external test source. Retry in 1 second." );
-                    sleep( PAUSE_BETWEEN_RETRIES );
-                }
-                else
-                {
-                    throw e;
-                }
-            }
-        }
-        return nextTestName;
-    }
-
-    private void sleep( int time )
-    {
-        try
-        {
-            Thread.sleep( time );
-        }
-        catch ( InterruptedException e1 )
-        {
-            throw new RuntimeException( e1 );
-        }
-    }
-
-    private String createRequestJson( TestRequest testRequest )
-    {
-        return String.format( "{\"hostname\":\"%s\",\"request\":\"%s\"}", testRequest.getHostname(),
-                testRequest.getRequestType() );
-    }
-
-
-    private String fetchNextTestName()
-            throws IOException
-    {
-        String testName = null;
-        Socket socket = new Socket( url.getHost(), url.getPort() );
-        BufferedWriter out = null;
-        BufferedReader in = null;
-        try
-        {
-            out = new BufferedWriter( new OutputStreamWriter( socket.getOutputStream() ) );
-            out.write( createRequestJson( new TestRequest( HOSTNAME, "GetNext" ) ) );
-            out.flush();
-            in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
-            testName = in.readLine();
-            socket.shutdownInput();
-        }
-        finally
-        {
-            try
-            {
-                if ( out != null )
-                {
-                    out.close();
-                }
-
-                if ( in != null )
-                {
-                    in.close();
-                }
-            }
-            finally
-            {
-                socket.close();
-            }
-        }
-
-        return testName;
-    }
 
     private Class getItem( int pos )
     {
@@ -198,7 +119,7 @@ public class LazySocketTestToRun
     public String toString()
     {
         StringBuilder sb = new StringBuilder( "LazySocketTestsToRun: " );
-        sb.append( '(' ).append( url ).append( "):" );
+        sb.append( '(' ).append( socketCommunicationEngine ).append( "):" );
         synchronized ( workQueue )
         {
             sb.append( workQueue );
@@ -226,14 +147,7 @@ public class LazySocketTestToRun
 
         public boolean hasNext()
         {
-            try
-            {
-                return hasNextTextClass( pos + 1 );
-            }
-            catch ( IOException e )
-            {
-                throw new RuntimeException( "Error receiving next test class from external source", e );
-            }
+            return hasNextTextClass( pos + 1 );
         }
 
         public Class next()
@@ -247,26 +161,4 @@ public class LazySocketTestToRun
         }
     }
 
-    private class TestRequest
-    {
-        private String hostname;
-        private String requestType;
-
-        public TestRequest( String hostname, String requestType )
-        {
-            this.hostname = hostname;
-            this.requestType = requestType;
-        }
-
-        public String getHostname()
-        {
-            return hostname;
-        }
-
-        public String getRequestType()
-        {
-            return requestType;
-        }
-
-    }
 }

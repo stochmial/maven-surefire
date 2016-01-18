@@ -19,11 +19,10 @@ package org.apache.maven.surefire.booter;
  * under the License.
  */
 
+import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.util.TestsToRun;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * Produces external TestToRun providers based on URL passed in
@@ -35,28 +34,10 @@ public class ExternalTestToRunFactory
 
     public static final String SOCKET = "socket";
 
-    static TestsToRun createTestToRun ( String sourceUrl )
-                    throws MalformedURLException
+    static TestsToRun createTestToRun( String sourceUrl )
+            throws MalformedURLException
     {
-        URI url = null;
-        try
-        {
-            url = new URI( sourceUrl );
-
-            if ( SOCKET.equals( url.getScheme() ) )
-            {
-                return new LazySocketTestToRun( url, 3 );
-            }
-            else
-            {
-                throw new IllegalArgumentException( "No support for external test provider with URL: " + url );
-            }
-        }
-        catch ( URISyntaxException e )
-        {
-
-            throw new IllegalArgumentException( "No support for external test provider with URL: " + url );
-        }
+        return new LazySocketTestToRun( new SocketCommunicationEngine( sourceUrl, 3 ) );
     }
 
 }

@@ -20,6 +20,7 @@ package org.apache.maven.surefire.junit;
  */
 
 import java.util.Iterator;
+
 import org.apache.maven.surefire.common.junit3.JUnit3Reflector;
 import org.apache.maven.surefire.common.junit3.JUnit3TestChecker;
 import org.apache.maven.surefire.providerapi.AbstractProvider;
@@ -41,7 +42,7 @@ import org.apache.maven.surefire.util.TestsToRun;
  * @author Kristian Rosenvold
  */
 public class JUnit3Provider
-    extends AbstractProvider
+        extends AbstractProvider
 {
     private final ClassLoader testClassLoader;
 
@@ -71,17 +72,17 @@ public class JUnit3Provider
     }
 
     public RunResult invoke( Object forkTestSet )
-        throws TestSetFailedException
+            throws TestSetFailedException
     {
         if ( testsToRun == null )
         {
             if ( forkTestSet instanceof TestsToRun )
             {
-                testsToRun = (TestsToRun) forkTestSet;
+                testsToRun = ( TestsToRun ) forkTestSet;
             }
             else if ( forkTestSet instanceof Class )
             {
-                testsToRun = TestsToRun.fromClass( (Class<?>) forkTestSet );
+                testsToRun = TestsToRun.fromClass( ( Class<?> ) forkTestSet );
             }
             else
             {
@@ -91,13 +92,13 @@ public class JUnit3Provider
 
         ReporterFactory reporterFactory = providerParameters.getReporterFactory();
         final RunListener reporter = reporterFactory.createReporter();
-        ConsoleOutputCapture.startCapture( (ConsoleOutputReceiver) reporter );
+        ConsoleOutputCapture.startCapture( ( ConsoleOutputReceiver ) reporter );
 
         final String smClassName = System.getProperty( "surefire.security.manager" );
         if ( smClassName != null )
         {
             SecurityManager securityManager =
-                (SecurityManager) ReflectionUtils.instantiate( this.getClass().getClassLoader(), smClassName );
+                    ( SecurityManager ) ReflectionUtils.instantiate( this.getClass().getClassLoader(), smClassName );
             System.setSecurityManager( securityManager );
         }
 
@@ -111,16 +112,16 @@ public class JUnit3Provider
     }
 
     private SurefireTestSet createTestSet( Class<?> clazz )
-        throws TestSetFailedException
+            throws TestSetFailedException
     {
         return reflector.isJUnit3Available() && jUnit3TestChecker.accept( clazz )
-            ? new JUnitTestSet( clazz, reflector )
-            : new PojoTestSet( clazz );
+                ? new JUnitTestSet( clazz, reflector )
+                : new PojoTestSet( clazz );
 
     }
 
     private void executeTestSet( SurefireTestSet testSet, RunListener reporter, ClassLoader classLoader )
-        throws TestSetFailedException
+            throws TestSetFailedException
     {
 
         ReportEntry report = new SimpleReportEntry( this.getClass().getName(), testSet.getName() );
