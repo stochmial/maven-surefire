@@ -101,11 +101,13 @@ public class SocketCommunicationEngine
     {
         String response;
         int tries = 0;
+
+        String request = createRequestJson( requestType, pojo );
         while ( true )
         {
             try
             {
-                response = tryRequest( requestType, pojo );
+                response = tryRequest( request );
                 break;
             }
             catch ( IOException e )
@@ -130,19 +132,26 @@ public class SocketCommunicationEngine
         StringBuilder sb = new StringBuilder();
         sb.append( "{\"hostname\":\"" );
         sb.append( HOSTNAME );
-        sb.append( "\",\"requestType\":" );
+        sb.append( "\",\"request\":\"" );
         sb.append( requestType );
         sb.append( '\"' );
 
         if ( pojo != null )
         {
+            sb.append( ",\"data\":{" );
             Field[] allFields = pojo.getClass().getDeclaredFields();
             for ( Field each : allFields )
             {
                 addPojoFieldToJson( pojo, sb, each );
+                sb.append( ',' );
             }
+            if ( sb.charAt( sb.length() - 1 ) == ',' )
+            {
+                sb.delete( sb.length() - 1, sb.length() );
+            }
+            sb.append( "}" );
         }
-        sb.append( "}" );
+        sb.append( "}\n" );
         return sb.toString();
     }
 
@@ -167,7 +176,7 @@ public class SocketCommunicationEngine
         }
     }
 
-    private String tryRequest( String requestType, Object pojo )
+    private String tryRequest( String requestContent )
             throws IOException
     {
         String testName = null;
@@ -177,7 +186,7 @@ public class SocketCommunicationEngine
         try
         {
             out = new BufferedWriter( new OutputStreamWriter( socket.getOutputStream() ) );
-            out.write( createRequestJson( requestType, pojo ) );
+            out.write( requestContent );
             out.flush();
             in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
             testName = in.readLine();
@@ -204,6 +213,14 @@ public class SocketCommunicationEngine
         }
 
         return testName;
+    }
+
+    public static void main( String... args ) throws IOException
+    {
+        SocketCommunicationEngine engine = new SocketCommunicationEngine( "socket://localhost:8989", 0 );
+        System.out.println( String.format( "connect to: %s", engine.uri ) );
+        String testName = engine.tryRequest( engine.createRequestJson( "GetNext", engine.uri ) );
+        System.out.println( String.format( "testName='%s'", testName ) );
     }
 
 }
