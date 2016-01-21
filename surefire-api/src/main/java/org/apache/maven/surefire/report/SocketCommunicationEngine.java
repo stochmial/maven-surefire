@@ -155,6 +155,19 @@ public class SocketCommunicationEngine
         return sb.toString();
     }
 
+    private static String convertToString( Object o )
+    {
+        if ( o == null )
+        {
+            return "";
+        }
+        if ( o instanceof StackTraceWriter )
+        {
+            return ( ( StackTraceWriter ) o ).writeTrimmedTraceToString();
+        }
+        return String.valueOf( o ).trim();
+    }
+
     private static void addPojoFieldToJson( Object pojo, StringBuilder sb, Field each )
     {
         try
@@ -163,7 +176,7 @@ public class SocketCommunicationEngine
             Field field = pojo.getClass().getDeclaredField( each.getName() );
             field.setAccessible( true );
             Object value = field.get( pojo );
-            String strValue = String.valueOf( value );
+            String strValue = convertToString( value );
             sb.append( String.format( "\"%s\":\"%s\"", fieldName, strValue ) );
         }
         catch ( NoSuchFieldException e )

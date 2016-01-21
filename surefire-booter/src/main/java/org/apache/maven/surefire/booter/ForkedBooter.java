@@ -55,7 +55,7 @@ public class ForkedBooter
      * @throws Throwable Upon throwables
      */
     public static void main( String[] args )
-        throws Throwable
+            throws Throwable
     {
         final PrintStream originalOut = System.out;
         try
@@ -82,7 +82,7 @@ public class ForkedBooter
             }
 
             Thread.currentThread().getContextClassLoader().setDefaultAssertionStatus(
-                classpathConfiguration.isEnableAssertions() );
+                    classpathConfiguration.isEnableAssertions() );
             startupConfiguration.writeSurefireTestClasspathProperty();
 
             Object testSet;
@@ -111,22 +111,22 @@ public class ForkedBooter
             {
 
                 LegacyPojoStackTraceWriter stackTraceWriter =
-                    new LegacyPojoStackTraceWriter( "test subystem", "no method", t.getTargetException() );
+                        new LegacyPojoStackTraceWriter( "test subystem", "no method", t.getTargetException() );
                 StringBuilder stringBuilder = new StringBuilder();
                 ForkingRunListener.encode( stringBuilder, stackTraceWriter, false );
-                originalOut.println( ( (char) ForkingRunListener.BOOTERCODE_ERROR )
-                                     + ",0," + stringBuilder.toString() );
+                originalOut.println( ( ( char ) ForkingRunListener.BOOTERCODE_ERROR )
+                        + ",0," + stringBuilder.toString() );
             }
             catch ( Throwable t )
             {
                 StackTraceWriter stackTraceWriter = new LegacyPojoStackTraceWriter( "test subystem", "no method", t );
                 StringBuilder stringBuilder = new StringBuilder();
                 ForkingRunListener.encode( stringBuilder, stackTraceWriter, false );
-                originalOut.println( ( (char) ForkingRunListener.BOOTERCODE_ERROR )
-                                     + ",0," + stringBuilder.toString() );
+                originalOut.println( ( ( char ) ForkingRunListener.BOOTERCODE_ERROR )
+                        + ",0," + stringBuilder.toString() );
             }
             // Say bye.
-            originalOut.println( ( (char) ForkingRunListener.BOOTERCODE_BYE ) + ",0,BYE!" );
+            originalOut.println( ( ( char ) ForkingRunListener.BOOTERCODE_BYE ) + ",0,BYE!" );
             originalOut.flush();
             // noinspection CallToSystemExit
             exit( 0 );
@@ -153,19 +153,23 @@ public class ForkedBooter
     private static RunResult runSuitesInProcess( Object testSet, StartupConfiguration startupConfiguration,
                                                  ProviderConfiguration providerConfiguration,
                                                  PrintStream originalSystemOut )
-        throws SurefireExecutionException, TestSetFailedException, InvocationTargetException
+            throws SurefireExecutionException, TestSetFailedException, InvocationTargetException
     {
         final ReporterFactory factory = createForkingReporterFactory( providerConfiguration, originalSystemOut );
 
         return invokeProviderInSameClassLoader( testSet, factory, providerConfiguration, true, startupConfiguration,
-                                                false );
+                false );
     }
 
     private static ReporterFactory createForkingReporterFactory( ProviderConfiguration providerConfiguration,
                                                                  PrintStream originalSystemOut )
     {
         final Boolean trimStackTrace = providerConfiguration.getReporterConfiguration().isTrimStackTrace();
-        return SurefireReflector.createForkingReporterFactoryInCurrentClassLoader( trimStackTrace, originalSystemOut );
+        String socketUrl = providerConfiguration.isReportToExternalService()
+                ? providerConfiguration.getTestResultsReportingUrl()
+                : null;
+        return SurefireReflector.createForkingReporterFactoryInCurrentClassLoader( trimStackTrace, originalSystemOut,
+                socketUrl );
     }
 
     @SuppressWarnings( "checkstyle:emptyblock" )
@@ -194,7 +198,7 @@ public class ForkedBooter
                                                              boolean insideFork,
                                                              StartupConfiguration startupConfiguration1,
                                                              boolean restoreStreams )
-        throws TestSetFailedException, InvocationTargetException
+            throws TestSetFailedException, InvocationTargetException
     {
         final PrintStream orgSystemOut = System.out;
         final PrintStream orgSystemErr = System.err;
@@ -202,7 +206,7 @@ public class ForkedBooter
         // in createProvider below. These are the same values as here.
 
         final SurefireProvider provider =
-            createProviderInCurrentClassloader( startupConfiguration1, insideFork, providerConfiguration, factory );
+                createProviderInCurrentClassloader( startupConfiguration1, insideFork, providerConfiguration, factory );
         try
         {
             return provider.invoke( testSet );
@@ -223,7 +227,8 @@ public class ForkedBooter
                                                                        Object reporterManagerFactory1 )
     {
 
-        BaseProviderFactory bpf = new BaseProviderFactory( (ReporterFactory) reporterManagerFactory1, isInsideFork );
+        BaseProviderFactory bpf = new BaseProviderFactory( ( ReporterFactory ) reporterManagerFactory1, isInsideFork,
+                providerConfiguration.getTestResultsReportingUrl() );
         bpf.setTestRequest( providerConfiguration.getTestSuiteDefinition() );
         bpf.setReporterConfiguration( providerConfiguration.getReporterConfiguration() );
         ClassLoader clasLoader = Thread.currentThread().getContextClassLoader();
@@ -232,8 +237,8 @@ public class ForkedBooter
         bpf.setProviderProperties( providerConfiguration.getProviderProperties() );
         bpf.setRunOrderParameters( providerConfiguration.getRunOrderParameters() );
         bpf.setDirectoryScannerParameters( providerConfiguration.getDirScannerParams() );
-        return (SurefireProvider) ReflectionUtils.instantiateOneArg( clasLoader,
-                                                                     startupConfiguration1.getActualClassName(),
-                                                                     ProviderParameters.class, bpf );
+        return ( SurefireProvider ) ReflectionUtils.instantiateOneArg( clasLoader,
+                startupConfiguration1.getActualClassName(),
+                ProviderParameters.class, bpf );
     }
 }

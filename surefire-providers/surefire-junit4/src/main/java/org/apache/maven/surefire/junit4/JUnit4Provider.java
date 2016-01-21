@@ -165,6 +165,7 @@ public class JUnit4Provider
         finally
         {
             reporter.testSetCompleted( report );
+
         }
     }
 

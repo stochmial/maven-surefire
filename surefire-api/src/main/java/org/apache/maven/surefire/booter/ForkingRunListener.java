@@ -28,6 +28,7 @@ import org.apache.maven.surefire.report.ConsoleOutputReceiver;
 import org.apache.maven.surefire.report.ReportEntry;
 import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.SafeThrowable;
+import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.report.StackTraceWriter;
 import org.apache.maven.surefire.util.internal.StringUtils;
 
@@ -49,37 +50,37 @@ import org.apache.maven.surefire.util.internal.StringUtils;
  * @author Kristian Rosenvold
  */
 public class ForkingRunListener
-    implements RunListener, ConsoleLogger, ConsoleOutputReceiver
+        implements RunListener, ConsoleLogger, ConsoleOutputReceiver
 {
-    public static final byte BOOTERCODE_TESTSET_STARTING = (byte) '1';
+    public static final byte BOOTERCODE_TESTSET_STARTING = ( byte ) '1';
 
-    public static final byte BOOTERCODE_TESTSET_COMPLETED = (byte) '2';
+    public static final byte BOOTERCODE_TESTSET_COMPLETED = ( byte ) '2';
 
-    public static final byte BOOTERCODE_STDOUT = (byte) '3';
+    public static final byte BOOTERCODE_STDOUT = ( byte ) '3';
 
-    public static final byte BOOTERCODE_STDERR = (byte) '4';
+    public static final byte BOOTERCODE_STDERR = ( byte ) '4';
 
-    public static final byte BOOTERCODE_TEST_STARTING = (byte) '5';
+    public static final byte BOOTERCODE_TEST_STARTING = ( byte ) '5';
 
-    public static final byte BOOTERCODE_TEST_SUCCEEDED = (byte) '6';
+    public static final byte BOOTERCODE_TEST_SUCCEEDED = ( byte ) '6';
 
-    public static final byte BOOTERCODE_TEST_ERROR = (byte) '7';
+    public static final byte BOOTERCODE_TEST_ERROR = ( byte ) '7';
 
-    public static final byte BOOTERCODE_TEST_FAILED = (byte) '8';
+    public static final byte BOOTERCODE_TEST_FAILED = ( byte ) '8';
 
-    public static final byte BOOTERCODE_TEST_SKIPPED = (byte) '9';
+    public static final byte BOOTERCODE_TEST_SKIPPED = ( byte ) '9';
 
-    public static final byte BOOTERCODE_TEST_ASSUMPTIONFAILURE = (byte) 'G';
+    public static final byte BOOTERCODE_TEST_ASSUMPTIONFAILURE = ( byte ) 'G';
 
-    public static final byte BOOTERCODE_CONSOLE = (byte) 'H';
+    public static final byte BOOTERCODE_CONSOLE = ( byte ) 'H';
 
-    public static final byte BOOTERCODE_SYSPROPS = (byte) 'I';
+    public static final byte BOOTERCODE_SYSPROPS = ( byte ) 'I';
 
-    public static final byte BOOTERCODE_NEXT_TEST = (byte) 'N';
+    public static final byte BOOTERCODE_NEXT_TEST = ( byte ) 'N';
 
-    public static final byte BOOTERCODE_ERROR = (byte) 'X';
+    public static final byte BOOTERCODE_ERROR = ( byte ) 'X';
 
-    public static final byte BOOTERCODE_BYE = (byte) 'Z';
+    public static final byte BOOTERCODE_BYE = ( byte ) 'Z';
 
 
     private final PrintStream target;
@@ -92,7 +93,9 @@ public class ForkingRunListener
 
     private final byte[] stdErrHeader;
 
-    public ForkingRunListener( PrintStream target, int testSetChannelId, boolean trimStackTraces )
+    private final SocketCommunicationEngine socketCommunicationEngine;
+
+    public ForkingRunListener( PrintStream target, int testSetChannelId, boolean trimStackTraces, String socketUrl )
     {
         this.target = target;
         this.testSetChannelId = testSetChannelId;
@@ -100,6 +103,7 @@ public class ForkingRunListener
         stdOutHeader = createHeader( BOOTERCODE_STDOUT, testSetChannelId );
         stdErrHeader = createHeader( BOOTERCODE_STDERR, testSetChannelId );
         sendProps();
+        this.socketCommunicationEngine = socketUrl == null ? null : new SocketCommunicationEngine( socketUrl, 3 );
     }
 
     public void testSetStarting( ReportEntry report )
@@ -110,6 +114,10 @@ public class ForkingRunListener
     public void testSetCompleted( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TESTSET_COMPLETED, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestSetResults", report );
+        }
     }
 
     public void testStarting( ReportEntry report )
@@ -120,26 +128,46 @@ public class ForkingRunListener
     public void testSucceeded( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TEST_SUCCEEDED, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", report );
+        }
     }
 
     public void testAssumptionFailure( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TEST_ASSUMPTIONFAILURE, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", report );
+        }
     }
 
     public void testError( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TEST_ERROR, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", report );
+        }
     }
 
     public void testFailed( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TEST_FAILED, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", report );
+        }
     }
 
     public void testSkipped( ReportEntry report )
     {
         target.print( toString( BOOTERCODE_TEST_SKIPPED, report, testSetChannelId ) );
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", report );
+        }
     }
 
     void sendProps()
@@ -152,7 +180,7 @@ public class ForkingRunListener
 
             while ( propertyKeys.hasMoreElements() )
             {
-                String key = (String) propertyKeys.nextElement();
+                String key = ( String ) propertyKeys.nextElement();
 
                 String value = systemProperties.getProperty( key );
 
@@ -169,9 +197,9 @@ public class ForkingRunListener
     {
         byte[] header = stdout ? stdOutHeader : stdErrHeader;
         byte[] content =
-            new byte[buf.length * 3 + 1]; // Hex-escaping can be up to 3 times length of a regular byte.
+                new byte[buf.length * 3 + 1]; // Hex-escaping can be up to 3 times length of a regular byte.
         int i = StringUtils.escapeBytesToPrintable( content, 0, buf, off, len );
-        content[i++] = (byte) '\n';
+        content[i++] = ( byte ) '\n';
 
         synchronized ( target ) // See notes about synchronization/thread safety in class javadoc
         {
@@ -184,8 +212,8 @@ public class ForkingRunListener
     {
         byte[] header = new byte[7];
         header[0] = booterCode;
-        header[1] = (byte) ',';
-        header[6] = (byte) ',';
+        header[1] = ( byte ) ',';
+        header[6] = ( byte ) ',';
 
         int i = testSetChannel;
         int charPos = 6;
@@ -193,21 +221,21 @@ public class ForkingRunListener
         int mask = radix - 1;
         do
         {
-            header[--charPos] = (byte) DIGITS[i & mask];
+            header[--charPos] = ( byte ) DIGITS[i & mask];
             i >>>= 4;
         }
         while ( i != 0 );
 
         while ( charPos > 2 )
         {
-            header[--charPos] = (byte) '0';
+            header[--charPos] = ( byte ) '0';
         }
         return header;
     }
 
     private static final char[] DIGITS =
         { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-            'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+                    'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
 
     public void info( String message )
@@ -218,8 +246,10 @@ public class ForkingRunListener
         }
 
         StringBuilder sb = new StringBuilder( 7 + message.length() * 5 );
-        append( sb, BOOTERCODE_CONSOLE ); comma( sb );
-        append( sb, Integer.toHexString( testSetChannelId ) ); comma( sb );
+        append( sb, BOOTERCODE_CONSOLE );
+        comma( sb );
+        append( sb, Integer.toHexString( testSetChannelId ) );
+        comma( sb );
         StringUtils.escapeToPrintable( sb, message );
 
         sb.append( '\n' );
@@ -230,8 +260,10 @@ public class ForkingRunListener
     {
         StringBuilder stringBuilder = new StringBuilder();
 
-        append( stringBuilder, BOOTERCODE_SYSPROPS ); comma( stringBuilder );
-        append( stringBuilder, Integer.toHexString( testSetChannelId ) ); comma( stringBuilder );
+        append( stringBuilder, BOOTERCODE_SYSPROPS );
+        comma( stringBuilder );
+        append( stringBuilder, Integer.toHexString( testSetChannelId ) );
+        comma( stringBuilder );
 
         StringUtils.escapeToPrintable( stringBuilder, key );
         comma( stringBuilder );
@@ -243,8 +275,10 @@ public class ForkingRunListener
     private String toString( byte operationCode, ReportEntry reportEntry, Integer testSetChannelId )
     {
         StringBuilder stringBuilder = new StringBuilder();
-        append( stringBuilder, operationCode ); comma( stringBuilder );
-        append( stringBuilder, Integer.toHexString( testSetChannelId ) ); comma( stringBuilder );
+        append( stringBuilder, operationCode );
+        comma( stringBuilder );
+        append( stringBuilder, Integer.toHexString( testSetChannelId ) );
+        comma( stringBuilder );
 
         nullableEncoding( stringBuilder, reportEntry.getSourceName() );
         comma( stringBuilder );
@@ -273,7 +307,7 @@ public class ForkingRunListener
 
     private ForkingRunListener append( StringBuilder stringBuilder, byte b )
     {
-        stringBuilder.append( (char) b );
+        stringBuilder.append( ( char ) b );
         return this;
     }
 
@@ -328,8 +362,8 @@ public class ForkingRunListener
             nullableEncoding( stringBuilder, stackTraceWriter.smartTrimmedStackTrace() );
             comma( stringBuilder );
             nullableEncoding( stringBuilder, trimStackTraces
-                ? stackTraceWriter.writeTrimmedTraceToString()
-                : stackTraceWriter.writeTraceToString() );
+                    ? stackTraceWriter.writeTrimmedTraceToString()
+                    : stackTraceWriter.writeTraceToString() );
         }
     }
 }

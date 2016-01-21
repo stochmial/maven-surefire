@@ -28,6 +28,7 @@ import org.apache.maven.surefire.report.ConsoleLogger;
 import org.apache.maven.surefire.report.ConsoleOutputReceiver;
 import org.apache.maven.surefire.report.ReportEntry;
 import org.apache.maven.surefire.report.RunListener;
+import org.apache.maven.surefire.report.SocketCommunicationEngine;
 
 /**
  * Reports data for a single test set.
@@ -63,12 +64,15 @@ public class TestSetRunListener
 
     private final StatisticsReporter statisticsReporter;
 
+    private final SocketCommunicationEngine socketCommunicationEngine;
+
     @SuppressWarnings( "checkstyle:parameternumber" )
     public TestSetRunListener( ConsoleReporter consoleReporter, FileReporter fileReporter,
                                StatelessXmlReporter simpleXMLReporter,
                                TestcycleConsoleOutputReceiver consoleOutputReceiver,
                                StatisticsReporter statisticsReporter, boolean trimStackTrace,
-                               boolean isPlainFormat, boolean briefOrPlainFormat )
+                               boolean isPlainFormat, boolean briefOrPlainFormat,
+                               SocketCommunicationEngine socketCommunicationEngine )
     {
         this.consoleReporter = consoleReporter;
         this.fileReporter = fileReporter;
@@ -77,7 +81,8 @@ public class TestSetRunListener
         this.consoleOutputReceiver = consoleOutputReceiver;
         this.briefOrPlainFormat = briefOrPlainFormat;
         this.detailsForThis = new TestSetStats( trimStackTrace, isPlainFormat );
-        this.testMethodStats = new ArrayList<TestMethodStats>(  );
+        this.testMethodStats = new ArrayList<TestMethodStats>();
+        this.socketCommunicationEngine = socketCommunicationEngine;
     }
 
     public void info( String message )
@@ -145,6 +150,12 @@ public class TestSetRunListener
             consoleReporter.testSetCompleted( wrap, detailsForThis, testResults );
         }
         consoleOutputReceiver.testSetCompleted( wrap );
+
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestSetResults", detailsForThis );
+        }
+
         if ( consoleReporter != null )
         {
             consoleReporter.reset();
@@ -154,6 +165,7 @@ public class TestSetRunListener
         wrap.getStdErr().free();
 
         addTestMethodStats();
+
         detailsForThis.reset();
 
     }
@@ -176,6 +188,10 @@ public class TestSetRunListener
         {
             statisticsReporter.testSucceeded( reportEntry );
         }
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
+        }
         clearCapture();
     }
 
@@ -187,6 +203,10 @@ public class TestSetRunListener
         {
             statisticsReporter.testError( reportEntry );
         }
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
+        }
         clearCapture();
     }
 
@@ -197,6 +217,10 @@ public class TestSetRunListener
         if ( statisticsReporter != null )
         {
             statisticsReporter.testFailed( reportEntry );
+        }
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
         }
         clearCapture();
     }
@@ -213,6 +237,10 @@ public class TestSetRunListener
         if ( statisticsReporter != null )
         {
             statisticsReporter.testSkipped( reportEntry );
+        }
+        if ( socketCommunicationEngine != null )
+        {
+            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
         }
         clearCapture();
     }

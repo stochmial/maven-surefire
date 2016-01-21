@@ -218,9 +218,10 @@ public class SurefireReflector
     }
 
     public static ReporterFactory createForkingReporterFactoryInCurrentClassLoader( Boolean trimStackTrace,
-                                                                                    PrintStream originalSystemOut )
+                                                                                    PrintStream originalSystemOut,
+                                                                                    String externalServerUrl )
     {
-        return new ForkingReporterFactory( trimStackTrace, originalSystemOut );
+        return new ForkingReporterFactory( trimStackTrace, originalSystemOut, externalServerUrl );
     }
 
     public Object createBooterConfiguration( ClassLoader surefireClassLoader, Object factoryInstance,

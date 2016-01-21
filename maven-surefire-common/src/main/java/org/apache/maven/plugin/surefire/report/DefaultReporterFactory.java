@@ -24,7 +24,6 @@ import org.apache.maven.plugin.surefire.runorder.StatisticsReporter;
 import org.apache.maven.surefire.report.DefaultDirectConsoleReporter;
 import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.report.RunListener;
-import org.apache.maven.surefire.report.RunListenerTestSetResultSocketDecorator;
 import org.apache.maven.surefire.report.RunStatistics;
 import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.report.StackTraceWriter;
@@ -88,20 +87,19 @@ public class DefaultReporterFactory
         }
     }
 
-    private RunListener decorateRunListener( RunListener runListener )
+    private SocketCommunicationEngine createSocketCommunicationEngine()
     {
-        RunListener result = runListener;
         if ( reportConfiguration.useExternalReportingServerUrl() )
         {
-            SocketCommunicationEngine communicationEngine = new SocketCommunicationEngine(
+            return new SocketCommunicationEngine(
                     reportConfiguration.getExternalReportingServerUri(), 3 );
-            result = new RunListenerTestSetResultSocketDecorator( communicationEngine, result );
         }
-        return result;
+        return null;
     }
 
     public RunListener createTestSetRunListener()
     {
+
         TestSetRunListener testSetRunListener =
                 new TestSetRunListener( reportConfiguration.instantiateConsoleReporter(),
                         reportConfiguration.instantiateFileReporter(),
@@ -109,9 +107,8 @@ public class DefaultReporterFactory
                         reportConfiguration.instantiateConsoleOutputFileReporter(), statisticsReporter,
                         reportConfiguration.isTrimStackTrace(),
                         ConsoleReporter.PLAIN.equals( reportConfiguration.getReportFormat() ),
-                        reportConfiguration.isBriefOrPlainFormat() );
-
-        testSetRunListener = ( TestSetRunListener ) decorateRunListener( testSetRunListener );
+                        reportConfiguration.isBriefOrPlainFormat(),
+                        createSocketCommunicationEngine() );
 
         listeners.add( testSetRunListener );
         return testSetRunListener;
