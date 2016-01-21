@@ -25,7 +25,6 @@ import org.apache.maven.surefire.report.DefaultDirectConsoleReporter;
 import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.report.RunStatistics;
-import org.apache.maven.surefire.report.SocketCommunicationEngine;
 import org.apache.maven.surefire.report.StackTraceWriter;
 import org.apache.maven.surefire.suite.RunResult;
 
@@ -87,19 +86,8 @@ public class DefaultReporterFactory
         }
     }
 
-    private SocketCommunicationEngine createSocketCommunicationEngine()
-    {
-        if ( reportConfiguration.useExternalReportingServerUrl() )
-        {
-            return new SocketCommunicationEngine(
-                    reportConfiguration.getExternalReportingServerUri(), 3 );
-        }
-        return null;
-    }
-
     public RunListener createTestSetRunListener()
     {
-
         TestSetRunListener testSetRunListener =
                 new TestSetRunListener( reportConfiguration.instantiateConsoleReporter(),
                         reportConfiguration.instantiateFileReporter(),
@@ -108,7 +96,7 @@ public class DefaultReporterFactory
                         reportConfiguration.isTrimStackTrace(),
                         ConsoleReporter.PLAIN.equals( reportConfiguration.getReportFormat() ),
                         reportConfiguration.isBriefOrPlainFormat(),
-                        createSocketCommunicationEngine() );
+                        reportConfiguration.getExternalReportingServerUri() );
 
         listeners.add( testSetRunListener );
         return testSetRunListener;

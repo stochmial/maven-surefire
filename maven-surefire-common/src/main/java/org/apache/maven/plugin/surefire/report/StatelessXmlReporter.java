@@ -19,6 +19,7 @@ package org.apache.maven.plugin.surefire.report;
  * under the License.
  */
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.shared.utils.io.IOUtil;
 import org.apache.maven.shared.utils.xml.XMLWriter;
 import org.apache.maven.surefire.report.ReportEntry;
@@ -47,6 +48,7 @@ import static org.apache.maven.plugin.surefire.report.DefaultReporterFactory.Tes
 import static org.apache.maven.plugin.surefire.report.FileReporterUtils.stripIllegalFilenameChars;
 
 // CHECKSTYLE_OFF: LineLength
+
 /**
  * XML format reporter writing to <code>TEST-<i>reportName</i>[-<i>suffix</i>].xml</code> file like written and read
  * by Ant's <a href="http://ant.apache.org/manual/Tasks/junit.html"><code>&lt;junit&gt;</code></a> and
@@ -77,7 +79,7 @@ import static org.apache.maven.plugin.surefire.report.FileReporterUtils.stripIll
  *
  * @author Kristian Rosenvold
  * @see <a href="http://wiki.apache.org/ant/Proposals/EnhancedTestReports">Ant's format enhancement proposal</a>
- *      (not yet implemented by Ant 1.8.2)
+ * (not yet implemented by Ant 1.8.2)
  */
 public class StatelessXmlReporter
 {
@@ -97,7 +99,7 @@ public class StatelessXmlReporter
     // Map between test class name and a map between test method name
     // and the list of runs for each test method
     private Map<String, Map<String, List<WrappedReportEntry>>> testClassMethodRunHistoryMap =
-        Collections.synchronizedMap( new HashMap<String, Map<String, List<WrappedReportEntry>>>() );
+            Collections.synchronizedMap( new HashMap<String, Map<String, List<WrappedReportEntry>>>() );
 
     public StatelessXmlReporter( File reportsDirectory, String reportNameSuffix, boolean trimStackTrace,
                                  int rerunFailingTestsCount )
@@ -106,6 +108,19 @@ public class StatelessXmlReporter
         this.reportNameSuffix = reportNameSuffix;
         this.trimStackTrace = trimStackTrace;
         this.rerunFailingTestsCount = rerunFailingTestsCount;
+    }
+
+    public String getXmlReport( WrappedReportEntry testSetReportEntry )
+    {
+        File reportFile = getReportFile( testSetReportEntry, reportsDirectory, reportNameSuffix );
+        try
+        {
+            return FileUtils.readFileToString( reportFile );
+        }
+        catch ( IOException e )
+        {
+            throw new IllegalStateException( e );
+        }
     }
 
     public void testSetCompleted( WrappedReportEntry testSetReportEntry, TestSetStats testSetStats )
@@ -125,11 +140,11 @@ public class StatelessXmlReporter
         try
         {
             org.apache.maven.shared.utils.xml.XMLWriter ppw =
-                new org.apache.maven.shared.utils.xml.PrettyPrintXMLWriter( fw );
+                    new org.apache.maven.shared.utils.xml.PrettyPrintXMLWriter( fw );
             ppw.setEncoding( ENCODING );
 
             createTestSuiteElement( ppw, testSetReportEntry, testSetStats, reportNameSuffix,
-                                    testSetStats.elapsedTimeAsString( getRunTimeForAllTests( methodRunHistoryMap ) ) );
+                    testSetStats.elapsedTimeAsString( getRunTimeForAllTests( methodRunHistoryMap ) ) );
 
             showProperties( ppw );
 
@@ -157,7 +172,7 @@ public class StatelessXmlReporter
                                 if ( methodEntry.getReportEntryType() == ReportEntryType.SUCCESS )
                                 {
                                     startTestElement( ppw, methodEntry, reportNameSuffix,
-                                                      methodEntryList.get( 0 ).elapsedTimeAsString() );
+                                            methodEntryList.get( 0 ).elapsedTimeAsString() );
                                     ppw.endElement();
                                 }
                             }
@@ -166,7 +181,7 @@ public class StatelessXmlReporter
                         case failure:
                             // When rerunFailingTestsCount is set to larger than 0
                             startTestElement( ppw, methodEntryList.get( 0 ), reportNameSuffix,
-                                              methodEntryList.get( 0 ).elapsedTimeAsString() );
+                                    methodEntryList.get( 0 ).elapsedTimeAsString() );
                             boolean firstRun = true;
                             for ( WrappedReportEntry singleRunEntry : methodEntryList )
                             {
@@ -174,13 +189,13 @@ public class StatelessXmlReporter
                                 {
                                     firstRun = false;
                                     getTestProblems( fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-                                                     singleRunEntry.getReportEntryType().getXmlTag(), false );
+                                            singleRunEntry.getReportEntryType().getXmlTag(), false );
                                     createOutErrElements( fw, ppw, singleRunEntry, outputStream );
                                 }
                                 else
                                 {
                                     getTestProblems( fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-                                                     singleRunEntry.getReportEntryType().getRerunXmlTag(), true );
+                                            singleRunEntry.getReportEntryType().getRerunXmlTag(), true );
                                 }
                             }
                             ppw.endElement();
@@ -202,7 +217,7 @@ public class StatelessXmlReporter
                                 if ( singleRunEntry.getReportEntryType() != ReportEntryType.SUCCESS )
                                 {
                                     getTestProblems( fw, ppw, singleRunEntry, trimStackTrace, outputStream,
-                                                     singleRunEntry.getReportEntryType().getFlakyXmlTag(), true );
+                                            singleRunEntry.getReportEntryType().getFlakyXmlTag(), true );
                                 }
                             }
                             ppw.endElement();
@@ -210,9 +225,9 @@ public class StatelessXmlReporter
                             break;
                         case skipped:
                             startTestElement( ppw, methodEntryList.get( 0 ), reportNameSuffix,
-                                              methodEntryList.get( 0 ).elapsedTimeAsString() );
+                                    methodEntryList.get( 0 ).elapsedTimeAsString() );
                             getTestProblems( fw, ppw, methodEntryList.get( 0 ), trimStackTrace, outputStream,
-                                             methodEntryList.get( 0 ).getReportEntryType().getXmlTag(), false );
+                                    methodEntryList.get( 0 ).getReportEntryType().getXmlTag(), false );
                             ppw.endElement();
                             break;
                         default:
@@ -229,7 +244,7 @@ public class StatelessXmlReporter
                         if ( methodEntry.getReportEntryType() != ReportEntryType.SUCCESS )
                         {
                             getTestProblems( fw, ppw, methodEntry, trimStackTrace, outputStream,
-                                             methodEntry.getReportEntryType().getXmlTag(), false );
+                                    methodEntry.getReportEntryType().getXmlTag(), false );
                             createOutErrElements( fw, ppw, methodEntry, outputStream );
                         }
                         ppw.endElement();
@@ -274,7 +289,6 @@ public class StatelessXmlReporter
      * For a successful/failed/error test, the run time is the first run
      * For a flaky test, the run time is the first successful run's time
      * The run time for the entire test class is the sum of all its test methods
-     *
      *
      * @param methodRunHistoryMap the input map between test method name and the list of all its runs
      *                            in a given test class
@@ -381,7 +395,7 @@ public class StatelessXmlReporter
         if ( reportNameSuffix != null && reportNameSuffix.length() > 0 )
         {
             reportFile = new File( reportsDirectory, stripIllegalFilenameChars(
-                "TEST-" + report.getName() + "-" + reportNameSuffix + ".xml" ) );
+                    "TEST-" + report.getName() + "-" + reportNameSuffix + ".xml" ) );
         }
         else
         {
@@ -461,8 +475,8 @@ public class StatelessXmlReporter
                 if ( t.getMessage() != null )
                 {
                     ppw.addAttribute( "type", ( stackTrace.contains( ":" )
-                        ? stackTrace.substring( 0, stackTrace.indexOf( ":" ) )
-                        : stackTrace ) );
+                            ? stackTrace.substring( 0, stackTrace.indexOf( ":" ) )
+                            : stackTrace ) );
                 }
                 else
                 {
@@ -539,7 +553,7 @@ public class StatelessXmlReporter
 
             while ( propertyKeys.hasMoreElements() )
             {
-                String key = (String) propertyKeys.nextElement();
+                String key = ( String ) propertyKeys.nextElement();
 
                 String value = systemProperties.getProperty( key );
 
@@ -579,7 +593,7 @@ public class StatelessXmlReporter
     }
 
     private static class EncodingOutputStream
-        extends FilterOutputStream
+            extends FilterOutputStream
     {
         private int c1;
 
@@ -602,7 +616,7 @@ public class StatelessXmlReporter
 
         @Override
         public void write( int b )
-            throws IOException
+                throws IOException
         {
             if ( isCdataEndBlock( b ) )
             {
@@ -644,7 +658,7 @@ public class StatelessXmlReporter
 
     private static boolean isIllegalEscape( char c )
     {
-        return isIllegalEscape( (int) c );
+        return isIllegalEscape( ( int ) c );
     }
 
     private static boolean isIllegalEscape( int c )
@@ -665,8 +679,8 @@ public class StatelessXmlReporter
                 // we're going to deliberately doubly-XML escape it...
                 // there's nothing better we can do! :-(
                 // SUREFIRE-456
-                sb.append( attribute ? "&#" : "&amp#" ).append( (int) c ).append(
-                    ';' ); // & Will be encoded to amp inside xml encodingSHO
+                sb.append( attribute ? "&#" : "&amp#" ).append( ( int ) c ).append(
+                        ';' ); // & Will be encoded to amp inside xml encodingSHO
             }
             else
             {

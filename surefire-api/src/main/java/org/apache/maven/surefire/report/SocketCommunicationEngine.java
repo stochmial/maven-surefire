@@ -19,12 +19,14 @@ package org.apache.maven.surefire.report;
  * under the License.
  */
 
+import org.json.simple.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Field;
+import java.io.StringWriter;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -129,70 +131,44 @@ public class SocketCommunicationEngine
 
     private String createRequestJson( String requestType, Object pojo )
     {
-        StringBuilder sb = new StringBuilder();
-        sb.append( "{\"hostname\":\"" );
-        sb.append( HOSTNAME );
-        sb.append( "\",\"request\":\"" );
-        sb.append( requestType );
-        sb.append( '\"' );
 
-        if ( pojo != null )
-        {
-            sb.append( ",\"data\":{" );
-            Field[] allFields = pojo.getClass().getDeclaredFields();
-            for ( Field each : allFields )
-            {
-                addPojoFieldToJson( pojo, sb, each );
-                sb.append( ',' );
-            }
-            if ( sb.charAt( sb.length() - 1 ) == ',' )
-            {
-                sb.delete( sb.length() - 1, sb.length() );
-            }
-            sb.append( "}" );
-        }
-        sb.append( "}\n" );
-        return sb.toString();
-    }
-
-    private static String convertToString( Object o )
-    {
-        if ( o == null )
-        {
-            return "";
-        }
-        if ( o instanceof StackTraceWriter )
-        {
-            return ( ( StackTraceWriter ) o ).writeTrimmedTraceToString();
-        }
-        return String.valueOf( o ).trim();
-    }
-
-    private static void addPojoFieldToJson( Object pojo, StringBuilder sb, Field each )
-    {
+        JSONObject obj = new JSONObject();
+        obj.put( "hostname", HOSTNAME );
+        obj.put( "request", requestType );
+        addPojoToJson( pojo, obj );
+        StringWriter out = new StringWriter();
         try
         {
-            String fieldName = each.getName();
-            Field field = pojo.getClass().getDeclaredField( each.getName() );
-            field.setAccessible( true );
-            Object value = field.get( pojo );
-            String strValue = convertToString( value );
-            sb.append( String.format( "\"%s\":\"%s\"", fieldName, strValue ) );
+            obj.writeJSONString( out );
         }
-        catch ( NoSuchFieldException e )
+        catch ( IOException e )
         {
             throw new IllegalStateException( e );
         }
-        catch ( IllegalAccessException e )
+        String requestStr = out.toString();
+        return requestStr + '\n';
+    }
+
+    private void addPojoToJson( Object pojo, JSONObject obj )
+    {
+        if ( pojo != null )
         {
-            throw new IllegalStateException( e );
+            if ( pojo instanceof CharSequence )
+            {
+                obj.put( "data", pojo );
+            }
+            else
+            {
+                // not needed yet
+                throw new IllegalArgumentException( "unsupported object type" );
+            }
         }
     }
 
     private String tryRequest( String requestContent )
             throws IOException
     {
-        String testName = null;
+        String response = null;
         Socket socket = new Socket( uri.getHost(), uri.getPort() );
         BufferedWriter out = null;
         BufferedReader in = null;
@@ -202,7 +178,7 @@ public class SocketCommunicationEngine
             out.write( requestContent );
             out.flush();
             in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
-            testName = in.readLine();
+            response = in.readLine();
             socket.shutdownInput();
         }
         finally
@@ -225,7 +201,7 @@ public class SocketCommunicationEngine
             }
         }
 
-        return testName;
+        return response;
     }
 
     public static void main( String... args ) throws IOException

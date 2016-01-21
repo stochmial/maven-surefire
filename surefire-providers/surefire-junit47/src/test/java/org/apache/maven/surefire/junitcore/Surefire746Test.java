@@ -88,7 +88,7 @@ public class Surefire746Test
         throws Exception
     {
         ReporterFactory reporterFactory = DefaultReporterFactory.defaultNoXml();
-        BaseProviderFactory providerParameters = new BaseProviderFactory( reporterFactory, true, null );
+        BaseProviderFactory providerParameters = new BaseProviderFactory( reporterFactory, true );
         ConsoleLogger consoleLogger = new DefaultConsoleReporter( System.out );
 
         providerParameters.setReporterConfiguration( new ReporterConfiguration( new File( "" ), false ) );

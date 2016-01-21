@@ -37,7 +37,7 @@ import org.apache.maven.surefire.report.SocketCommunicationEngine;
  * @author Kristian Rosenvold
  */
 public class TestSetRunListener
-    implements RunListener, ConsoleOutputReceiver, ConsoleLogger
+        implements RunListener, ConsoleOutputReceiver, ConsoleLogger
 {
     private final TestSetStats detailsForThis;
 
@@ -71,8 +71,7 @@ public class TestSetRunListener
                                StatelessXmlReporter simpleXMLReporter,
                                TestcycleConsoleOutputReceiver consoleOutputReceiver,
                                StatisticsReporter statisticsReporter, boolean trimStackTrace,
-                               boolean isPlainFormat, boolean briefOrPlainFormat,
-                               SocketCommunicationEngine socketCommunicationEngine )
+                               boolean isPlainFormat, boolean briefOrPlainFormat, String socketUrl )
     {
         this.consoleReporter = consoleReporter;
         this.fileReporter = fileReporter;
@@ -82,7 +81,7 @@ public class TestSetRunListener
         this.briefOrPlainFormat = briefOrPlainFormat;
         this.detailsForThis = new TestSetStats( trimStackTrace, isPlainFormat );
         this.testMethodStats = new ArrayList<TestMethodStats>();
-        this.socketCommunicationEngine = socketCommunicationEngine;
+        this.socketCommunicationEngine = socketUrl == null ? null : new SocketCommunicationEngine( socketUrl, 3 );
     }
 
     public void info( String message )
@@ -141,6 +140,9 @@ public class TestSetRunListener
         {
             simpleXMLReporter.testSetCompleted( wrap, detailsForThis );
         }
+
+        reportToExternalUrl( wrap );
+
         if ( statisticsReporter != null )
         {
             statisticsReporter.testSetCompleted();
@@ -150,12 +152,6 @@ public class TestSetRunListener
             consoleReporter.testSetCompleted( wrap, detailsForThis, testResults );
         }
         consoleOutputReceiver.testSetCompleted( wrap );
-
-        if ( socketCommunicationEngine != null )
-        {
-            socketCommunicationEngine.sendRequest( "TestSetResults", detailsForThis );
-        }
-
         if ( consoleReporter != null )
         {
             consoleReporter.reset();
@@ -165,8 +161,17 @@ public class TestSetRunListener
         wrap.getStdErr().free();
 
         addTestMethodStats();
-
         detailsForThis.reset();
+
+    }
+
+    private void reportToExternalUrl( WrappedReportEntry wrappedtestSet )
+    {
+        if ( simpleXMLReporter != null && socketCommunicationEngine != null )
+        {
+            String xmlReport = simpleXMLReporter.getXmlReport( wrappedtestSet );
+            socketCommunicationEngine.sendRequest( "TestSetResults", xmlReport );
+        }
 
     }
 
@@ -188,10 +193,6 @@ public class TestSetRunListener
         {
             statisticsReporter.testSucceeded( reportEntry );
         }
-        if ( socketCommunicationEngine != null )
-        {
-            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
-        }
         clearCapture();
     }
 
@@ -203,10 +204,6 @@ public class TestSetRunListener
         {
             statisticsReporter.testError( reportEntry );
         }
-        if ( socketCommunicationEngine != null )
-        {
-            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
-        }
         clearCapture();
     }
 
@@ -217,10 +214,6 @@ public class TestSetRunListener
         if ( statisticsReporter != null )
         {
             statisticsReporter.testFailed( reportEntry );
-        }
-        if ( socketCommunicationEngine != null )
-        {
-            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
         }
         clearCapture();
     }
@@ -237,10 +230,6 @@ public class TestSetRunListener
         if ( statisticsReporter != null )
         {
             statisticsReporter.testSkipped( reportEntry );
-        }
-        if ( socketCommunicationEngine != null )
-        {
-            socketCommunicationEngine.sendRequest( "TestResults", wrapped );
         }
         clearCapture();
     }
@@ -275,8 +264,8 @@ public class TestSetRunListener
     private WrappedReportEntry wrapTestSet( ReportEntry other )
     {
         return new WrappedReportEntry( other, null, other.getElapsed() != null
-            ? other.getElapsed()
-            : detailsForThis.getElapsedSinceTestSetStart(), testStdOut, testStdErr );
+                ? other.getElapsed()
+                : detailsForThis.getElapsedSinceTestSetStart(), testStdOut, testStdErr );
     }
 
     public void close()
@@ -287,13 +276,13 @@ public class TestSetRunListener
         }
     }
 
-    public void  addTestMethodStats()
+    public void addTestMethodStats()
     {
         for ( WrappedReportEntry reportEntry : detailsForThis.getReportEntries() )
         {
             TestMethodStats methodStats =
-                new TestMethodStats( reportEntry.getClassMethodName(), reportEntry.getReportEntryType(),
-                                     reportEntry.getStackTraceWriter() );
+                    new TestMethodStats( reportEntry.getClassMethodName(), reportEntry.getReportEntryType(),
+                            reportEntry.getStackTraceWriter() );
             testMethodStats.add( methodStats );
         }
     }

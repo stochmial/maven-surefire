@@ -65,14 +65,11 @@ public class BaseProviderFactory
 
     private final boolean insideFork;
 
-    private final String socketUrl;
 
-
-    public BaseProviderFactory( ReporterFactory reporterFactory, Boolean insideFork, String socketUrl )
+    public BaseProviderFactory( ReporterFactory reporterFactory, Boolean insideFork )
     {
         this.reporterFactory = reporterFactory;
         this.insideFork = insideFork;
-        this.socketUrl = socketUrl;
     }
 
     public DirectoryScanner getDirectoryScanner()
@@ -132,7 +129,7 @@ public class BaseProviderFactory
         if ( insideFork )
         {
             return new ForkingRunListener( reporterConfiguration.getOriginalSystemOut(), ROOT_CHANNEL,
-                                           reporterConfiguration.isTrimStackTrace(), socketUrl );
+                                           reporterConfiguration.isTrimStackTrace() );
         }
         return new DefaultDirectConsoleReporter( reporterConfiguration.getOriginalSystemOut() );
     }

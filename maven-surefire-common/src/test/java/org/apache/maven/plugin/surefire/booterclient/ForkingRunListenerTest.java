@@ -257,8 +257,8 @@ public class ForkingRunListenerTest
         ReportEntry expected = createDefaultReportEntry();
         final SimpleReportEntry secondExpected = createAnotherDefaultReportEntry();
 
-        new ForkingRunListener( printStream, defaultChannel, false, null ).testStarting( expected );
-        new ForkingRunListener( printStream, anotherChannel, false, null ).testSkipped( secondExpected );
+        new ForkingRunListener( printStream, defaultChannel, false ).testStarting( expected );
+        new ForkingRunListener( printStream, anotherChannel, false ).testSkipped( secondExpected );
 
         TestSetMockReporterFactory providerReporterFactory = new TestSetMockReporterFactory();
         final ForkClient forkStreamClient = new ForkClient( providerReporterFactory, new Properties() );
@@ -317,7 +317,7 @@ public class ForkingRunListenerTest
 
     private RunListener createForkingRunListener( Integer testSetCHannel )
     {
-        return new ForkingRunListener( printStream, testSetCHannel, false, null );
+        return new ForkingRunListener( printStream, testSetCHannel, false );
     }
 
     private class StandardTestRun
