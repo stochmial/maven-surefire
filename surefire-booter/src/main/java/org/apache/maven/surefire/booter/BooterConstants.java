@@ -56,4 +56,5 @@ public final class BooterConstants
     public static final String TESTS_FROM_EXTERNAL_SOURCE_URL = "externalSourceUrl";
     public static final String REPORT_TO_EXTERNAL_SERVICE = "reportToExternalService";
     public static final String TEST_RESULTS_REPORTING_URL = "testResultsReportingUrl";
+    public static final String EXTERNAL_SOURCE_DEBUG_OUTPUT = "externalSourceDebugOutput";
 }

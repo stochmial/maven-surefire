@@ -71,6 +71,8 @@ public class ProviderConfiguration
 
     private final String testResultsReportingUrl;
 
+    private boolean externalSourceDebugOutput;
+
     @SuppressWarnings( "checkstyle:parameternumber" )
     public ProviderConfiguration( DirectoryScannerParameters directoryScannerParameters,
                                   RunOrderParameters runOrderParameters, boolean failIfNoTests,
@@ -78,7 +80,8 @@ public class ProviderConfiguration
                                   TestRequest testSuiteDefinition, Properties providerProperties,
                                   TypeEncodedValue typeEncodedTestSet, boolean readTestsFromInStream,
                                   boolean testsFromExternalSource, String externalSourceUrl,
-                                  boolean reportToExternalService, String testResultsReportingUrl )
+                                  boolean reportToExternalService, String testResultsReportingUrl,
+                                  boolean externalSourceDebugOutput )
     {
         this.runOrderParameters = runOrderParameters;
         this.providerProperties = providerProperties;
@@ -93,6 +96,7 @@ public class ProviderConfiguration
         this.externalSourceUrl = externalSourceUrl;
         this.reportToExternalService = reportToExternalService;
         this.testResultsReportingUrl = testResultsReportingUrl;
+        this.externalSourceDebugOutput = externalSourceDebugOutput;
     }
 
 
@@ -177,5 +181,10 @@ public class ProviderConfiguration
     public String getTestResultsReportingUrl()
     {
         return testResultsReportingUrl;
+    }
+
+    public boolean isExternalSourceDebugOutput()
+    {
+        return externalSourceDebugOutput;
     }
 }

@@ -69,6 +69,8 @@ public class StartupReportConfiguration
 
     private final String externalReportingServerUri;
 
+    private final boolean externalSourceDebugOutput;
+
     private final Properties testVmSystemProperties = new Properties();
 
     public static final String BRIEF_REPORT_FORMAT = ConsoleReporter.BRIEF;
@@ -80,7 +82,8 @@ public class StartupReportConfiguration
                                        boolean redirectTestOutputToFile, boolean disableXmlReport,
                                        @Nonnull File reportsDirectory, boolean trimStackTrace, String reportNameSuffix,
                                        String configurationHash, boolean requiresRunHistory,
-                                       int rerunFailingTestsCount, String externalReportingServerUri )
+                                       int rerunFailingTestsCount, String externalReportingServerUri,
+                                       boolean externalSourceDebugOutput )
     {
         this.useFile = useFile;
         this.printSummary = printSummary;
@@ -96,6 +99,7 @@ public class StartupReportConfiguration
         this.originalSystemErr = System.err;
         this.rerunFailingTestsCount = rerunFailingTestsCount;
         this.externalReportingServerUri = externalReportingServerUri;
+        this.externalSourceDebugOutput = externalSourceDebugOutput;
     }
 
 //    @SuppressWarnings( "checkstyle:parameternumber" )
@@ -113,14 +117,14 @@ public class StartupReportConfiguration
     {
         File target = new File( "./target" );
         return new StartupReportConfiguration( true, true, "PLAIN", false, false, target, false, null, "TESTHASH",
-                false, 0, null );
+                false, 0, null, false );
     }
 
     public static StartupReportConfiguration defaultNoXml()
     {
         File target = new File( "./target" );
         return new StartupReportConfiguration( true, true, "PLAIN", false, true, target, false, null, "TESTHASHxXML",
-                false, 0, null );
+                false, 0, null, false );
     }
 
     public boolean isUseFile()
@@ -260,5 +264,10 @@ public class StartupReportConfiguration
     public String getExternalReportingServerUri()
     {
         return externalReportingServerUri;
+    }
+
+    public boolean isExternalSourceDebugOutput()
+    {
+        return externalSourceDebugOutput;
     }
 }

@@ -20,12 +20,7 @@ package org.apache.maven.surefire.junitcore.pc;
  */
 
 import net.jcip.annotations.NotThreadSafe;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;

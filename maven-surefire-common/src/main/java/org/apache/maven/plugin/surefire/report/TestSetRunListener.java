@@ -71,7 +71,8 @@ public class TestSetRunListener
                                StatelessXmlReporter simpleXMLReporter,
                                TestcycleConsoleOutputReceiver consoleOutputReceiver,
                                StatisticsReporter statisticsReporter, boolean trimStackTrace,
-                               boolean isPlainFormat, boolean briefOrPlainFormat, String socketUrl )
+                               boolean isPlainFormat, boolean briefOrPlainFormat, String socketUrl,
+                               boolean externalSourceDebugOutput )
     {
         this.consoleReporter = consoleReporter;
         this.fileReporter = fileReporter;
@@ -81,7 +82,9 @@ public class TestSetRunListener
         this.briefOrPlainFormat = briefOrPlainFormat;
         this.detailsForThis = new TestSetStats( trimStackTrace, isPlainFormat );
         this.testMethodStats = new ArrayList<TestMethodStats>();
-        this.socketCommunicationEngine = socketUrl == null ? null : new SocketCommunicationEngine( socketUrl, 3 );
+        this.socketCommunicationEngine = socketUrl == null ? null : new SocketCommunicationEngine(
+                socketUrl, SocketCommunicationEngine.DEFAULT_NUMBER_OF_RETRIES,
+                SocketCommunicationEngine.DEFAULT_PAUSE_BETWEEN_RETRIES, externalSourceDebugOutput );
     }
 
     public void info( String message )

@@ -36,10 +36,13 @@ import java.net.URISyntaxException;
  */
 public class SocketCommunicationEngine
 {
+    public static final String JUST_WAIT = "WAIT";
 
     public static final String SOCKET = "socket";
 
-    public static final int PAUSE_BETWEEN_RETRIES = 1000;
+    public static final int DEFAULT_PAUSE_BETWEEN_RETRIES = 1000;
+
+    public static final int DEFAULT_NUMBER_OF_RETRIES = 3;
 
     private static final String HOSTNAME = HostnameResolver.resolveHostname();
 
@@ -47,10 +50,16 @@ public class SocketCommunicationEngine
 
     private final int retries;
 
-    public SocketCommunicationEngine( String uri, int retries )
+    private final boolean debugMode;
+
+    private final int pauseBetweenRetries;
+
+    public SocketCommunicationEngine( String uri, int retries, int pauseBetweenRetriesInSeconds, boolean debugMode )
     {
         this.retries = retries;
         this.uri = createUri( uri );
+        this.debugMode = debugMode;
+        this.pauseBetweenRetries = pauseBetweenRetriesInSeconds;
     }
 
     private URI createUri( String sourceUrl )
@@ -109,7 +118,18 @@ public class SocketCommunicationEngine
         {
             try
             {
+                if ( debugMode )
+                {
+                    System.out.println(
+                            String.format( "Sending request '%s', attempt number '%d'.", requestType, tries + 1 ) );
+                }
                 response = tryRequest( request );
+                if ( debugMode )
+                {
+                    System.out.println( String.format(
+                            "Response received for request '%s', attempt number '%d', response content '%s'.",
+                            requestType, tries + 1, response ) );
+                }
                 break;
             }
             catch ( IOException e )
@@ -118,7 +138,7 @@ public class SocketCommunicationEngine
                 {
                     tries++;
                     System.out.println( "Error connecting to external test source. Retry in 1 second." );
-                    sleep( PAUSE_BETWEEN_RETRIES );
+                    sleep( pauseBetweenRetries );
                 }
                 else
                 {
@@ -206,10 +226,28 @@ public class SocketCommunicationEngine
 
     public static void main( String... args ) throws IOException
     {
-        SocketCommunicationEngine engine = new SocketCommunicationEngine( "socket://localhost:8989", 0 );
+        SocketCommunicationEngine engine = new SocketCommunicationEngine(
+                "socket://localhost:8989", 0, DEFAULT_PAUSE_BETWEEN_RETRIES, true );
+
         System.out.println( String.format( "connect to: %s", engine.uri ) );
-        String testName = engine.tryRequest( engine.createRequestJson( "GetNext", engine.uri ) );
-        System.out.println( String.format( "testName='%s'", testName ) );
+
+        String testName = engine.sendRequest( "GetNext" );
+
+        while ( ! "".equals( testName ) )
+        {
+            if ( JUST_WAIT.equals( testName ) )
+            {
+                System.out.println( "waiting" );
+            }
+            else
+            {
+                System.out.println( String.format( "executing testName='%s'", testName ) );
+            }
+
+            testName = engine.sendRequest( "GetNext" );
+        }
+
+        System.out.println( "No more tests" );
     }
 
 }

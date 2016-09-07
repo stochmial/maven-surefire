@@ -96,7 +96,8 @@ public class ForkedBooter
             }
             else if ( readTestsFromExternalSource )
             {
-                testSet = ExternalTestToRunFactory.createTestToRun( providerConfiguration.getExternalSourceUrl() );
+                testSet = ExternalTestToRunFactory.createTestToRun( providerConfiguration.getExternalSourceUrl(),
+                        providerConfiguration.isExternalSourceDebugOutput() );
             }
             else
             {

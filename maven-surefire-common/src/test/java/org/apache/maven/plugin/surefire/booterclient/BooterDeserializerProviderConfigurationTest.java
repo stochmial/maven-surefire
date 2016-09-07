@@ -228,7 +228,7 @@ public class BooterDeserializerProviderConfigurationTest
         return new ProviderConfiguration( directoryScannerParameters, runOrderParameters, true, reporterConfiguration,
                                           new TestArtifactInfo( "5.0", "ABC" ), testSuiteDefinition, new Properties(),
                                           aTestTyped, readTestsFromInStream, false,
-                                          null, false, null );
+                                          null, false, null, false );
     }
 
     private StartupConfiguration getTestStartupConfiguration( ClassLoaderConfiguration classLoaderConfiguration )

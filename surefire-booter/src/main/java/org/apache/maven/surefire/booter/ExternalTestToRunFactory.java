@@ -32,12 +32,13 @@ import java.net.MalformedURLException;
 public class ExternalTestToRunFactory
 {
 
-    public static final String SOCKET = "socket";
-
-    static TestsToRun createTestToRun( String sourceUrl )
+    static TestsToRun createTestToRun( String sourceUrl, boolean debugMode )
             throws MalformedURLException
     {
-        return new LazySocketTestToRun( new SocketCommunicationEngine( sourceUrl, 3 ) );
+        return new LazySocketTestToRun( new SocketCommunicationEngine( sourceUrl,
+                SocketCommunicationEngine.DEFAULT_NUMBER_OF_RETRIES,
+                SocketCommunicationEngine.DEFAULT_PAUSE_BETWEEN_RETRIES,
+                debugMode ) );
     }
 
 }

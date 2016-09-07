@@ -763,6 +763,14 @@ public abstract class AbstractSurefireMojo
     private String externalSourceUrl;
 
     /**
+     * Print extra debug message on console with requests and response from external server.
+     *
+     * @since 2.19
+     */
+    @Parameter( property = "externalSourceDebugOutput" )
+    private boolean externalSourceDebugOutput;
+
+    /**
      *
      */
     @Component
@@ -794,6 +802,11 @@ public abstract class AbstractSurefireMojo
     private String getTestReportsServiceUri()
     {
         return reportToExternalService ? testResultsReportingUrl : null;
+    }
+
+    public boolean isExternalSourceDebugOutput()
+    {
+        return externalSourceDebugOutput;
     }
 
     private SurefireDependencyResolver dependencyResolver;
@@ -1548,7 +1561,8 @@ public abstract class AbstractSurefireMojo
 
         return new ProviderConfiguration( directoryScannerParameters, runOrderParameters, actualFailIfNoTests,
                 reporterConfiguration, testNg, testSuiteDefinition, providerProperties, null,
-                false, testsFromExternalSource, externalSourceUrl, reportToExternalService, testResultsReportingUrl );
+                false, testsFromExternalSource, externalSourceUrl, reportToExternalService, testResultsReportingUrl,
+                externalSourceDebugOutput );
     }
 
     public String getStatisticsFileName( String configurationHash )
@@ -1624,7 +1638,8 @@ public abstract class AbstractSurefireMojo
         return new StartupReportConfiguration( isUseFile(), isPrintSummary(), getReportFormat(),
                 isRedirectTestOutputToFile(), isDisableXmlReport(),
                 getReportsDirectory(), isTrimStackTrace(), getReportNameSuffix(),
-                configChecksum, requiresRunHistory(), getRerunFailingTestsCount(), getTestReportsServiceUri() );
+                configChecksum, requiresRunHistory(), getRerunFailingTestsCount(), getTestReportsServiceUri(),
+                isExternalSourceDebugOutput() );
     }
 
     private boolean isSpecificTestSpecified()

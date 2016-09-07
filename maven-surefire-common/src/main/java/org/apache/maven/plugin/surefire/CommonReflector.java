@@ -74,7 +74,8 @@ public class CommonReflector
             reporterConfiguration.isDisableXmlReport(), reporterConfiguration.getReportsDirectory(),
             reporterConfiguration.isTrimStackTrace(), reporterConfiguration.getReportNameSuffix(),
             reporterConfiguration.getConfigurationHash(), reporterConfiguration.isRequiresRunHistory(),
-            reporterConfiguration.getRerunFailingTestsCount(), reporterConfiguration.getExternalReportingServerUri() };
+            reporterConfiguration.getRerunFailingTestsCount(), reporterConfiguration.getExternalReportingServerUri(),
+            reporterConfiguration.isExternalSourceDebugOutput()};
         return ReflectionUtils.newInstance( constructor, params );
     }
 

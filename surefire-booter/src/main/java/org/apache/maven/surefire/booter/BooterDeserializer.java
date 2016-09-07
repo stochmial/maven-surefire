@@ -87,6 +87,7 @@ public class BooterDeserializer
         final String externalSourceUrl = properties.getProperty( TESTS_FROM_EXTERNAL_SOURCE_URL );
         final boolean reportToExternalService = properties.getBooleanProperty( REPORT_TO_EXTERNAL_SERVICE );
         final String testResultsReportingUrl = properties.getProperty( TEST_RESULTS_REPORTING_URL );
+        final boolean externalSourceDebugOutput = properties.getBooleanProperty( EXTERNAL_SOURCE_DEBUG_OUTPUT );
 
         DirectoryScannerParameters dirScannerParams =
                 new DirectoryScannerParameters( testClassesDirectory, includesList, excludesList, specificTestsList,
@@ -106,7 +107,7 @@ public class BooterDeserializer
                 properties.getBooleanProperty( FAILIFNOTESTS ), reporterConfiguration, testNg,
                 testSuiteDefinition, properties.getProperties(), typeEncodedTestForFork,
                 preferTestsFromInStream, testsFromExternalSource, externalSourceUrl,
-                reportToExternalService, testResultsReportingUrl );
+                reportToExternalService, testResultsReportingUrl, externalSourceDebugOutput );
     }
 
     public StartupConfiguration getProviderConfiguration()

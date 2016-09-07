@@ -136,7 +136,9 @@ class BooterSerializer
         properties.setProperty( BooterConstants.PROVIDER_CONFIGURATION, providerConfiguration.getProviderClassName() );
 
         properties.setProperty( BooterConstants.RUN_TESTS_FROM_EXTERNAL_SOURCE,
-                                booterConfiguration.isTestsFromExternalSource() );
+                booterConfiguration.isTestsFromExternalSource() );
+        properties.setProperty( BooterConstants.EXTERNAL_SOURCE_DEBUG_OUTPUT,
+                booterConfiguration.isExternalSourceDebugOutput() );
         String externalSourceUrl = booterConfiguration.getExternalSourceUrl();
         if ( externalSourceUrl != null )
         {
@@ -150,6 +152,11 @@ class BooterSerializer
         {
             properties.setProperty( BooterConstants.TEST_RESULTS_REPORTING_URL,
                     testResultsReportingUrl );
+        }
+        else if ( externalSourceUrl != null )
+        {
+            properties.setProperty( BooterConstants.TEST_RESULTS_REPORTING_URL,
+                    externalSourceUrl );
         }
 
         return SystemPropertyManager.writePropertiesFile( properties,

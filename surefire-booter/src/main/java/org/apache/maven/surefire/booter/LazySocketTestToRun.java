@@ -36,8 +36,6 @@ import java.util.List;
 public class LazySocketTestToRun
         extends TestsToRun
 {
-    public static final String JUST_WAIT = "WAIT";
-
     public static final int WAIT_STEP_SECONDS = 30;
 
     private final List<Class> workQueue = new ArrayList<Class>();
@@ -80,11 +78,13 @@ public class LazySocketTestToRun
 
     private boolean justWait( String testName )
     {
-        return JUST_WAIT.equals( testName );
+        return SocketCommunicationEngine.JUST_WAIT.equals( testName );
     }
 
     private void sleep( int sec )
     {
+        System.out.println( String.format( "Received '%s', sleeping %d seconds",
+                SocketCommunicationEngine.JUST_WAIT, sec ) );
         try
         {
             Thread.sleep( sec * 1000 );

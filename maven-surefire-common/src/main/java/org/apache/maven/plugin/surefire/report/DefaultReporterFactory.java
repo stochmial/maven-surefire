@@ -96,7 +96,8 @@ public class DefaultReporterFactory
                         reportConfiguration.isTrimStackTrace(),
                         ConsoleReporter.PLAIN.equals( reportConfiguration.getReportFormat() ),
                         reportConfiguration.isBriefOrPlainFormat(),
-                        reportConfiguration.getExternalReportingServerUri() );
+                        reportConfiguration.getExternalReportingServerUri(),
+                        reportConfiguration.isExternalSourceDebugOutput() );
 
         listeners.add( testSetRunListener );
         return testSetRunListener;
