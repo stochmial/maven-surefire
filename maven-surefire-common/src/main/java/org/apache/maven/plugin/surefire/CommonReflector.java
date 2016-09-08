@@ -67,7 +67,7 @@ public class CommonReflector
                                                                          String.class, boolean.class, boolean.class,
                                                                          File.class, boolean.class, String.class,
                                                                          String.class, boolean.class, int.class,
-                                                                         String.class} );
+                                                                         String.class, boolean.class} );
         //noinspection BooleanConstructorCall
         final Object[] params = { reporterConfiguration.isUseFile(), reporterConfiguration.isPrintSummary(),
             reporterConfiguration.getReportFormat(), reporterConfiguration.isRedirectTestOutputToFile(),

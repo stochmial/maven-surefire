@@ -79,6 +79,10 @@ public class DefaultReporterFactory
     {
         for ( DefaultReporterFactory factory : factories )
         {
+//            if ( factory == null )
+//            {
+//                throw new IllegalStateException( "How possible!" );
+//            }
             for ( TestSetRunListener listener : factory.listeners )
             {
                 listeners.add( listener );
