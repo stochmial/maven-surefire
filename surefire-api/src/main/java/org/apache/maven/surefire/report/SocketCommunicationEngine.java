@@ -120,15 +120,15 @@ public class SocketCommunicationEngine
             {
                 if ( debugMode )
                 {
-                    System.out.println(
-                            String.format( "Sending request '%s', attempt number '%d'.", requestType, tries + 1 ) );
+                    System.out.println( String.format( "TEST CLIENT: Sending request '%s', attempt number '%d'.",
+                            requestType, tries + 1 ) );
                 }
                 response = tryRequest( request );
                 if ( debugMode )
                 {
                     System.out.println( String.format(
-                            "Response received for request '%s', attempt number '%d', response content '%s'.",
-                            requestType, tries + 1, response ) );
+                            "TEST CLIENT: Response received for request '%s', attempt number '%d',"
+                                    + " response content '%s'.", requestType, tries + 1, response ) );
                 }
                 break;
             }
@@ -137,7 +137,7 @@ public class SocketCommunicationEngine
                 if ( tries < retries )
                 {
                     tries++;
-                    System.out.println( "Error connecting to external test source. Retry in 1 second." );
+                    System.out.println( "TEST CLIENT: Error connecting to external test source. Retry in 1 second." );
                     sleep( pauseBetweenRetries );
                 }
                 else

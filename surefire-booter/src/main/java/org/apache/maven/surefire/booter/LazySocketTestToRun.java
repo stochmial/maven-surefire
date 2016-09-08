@@ -57,14 +57,10 @@ public class LazySocketTestToRun
         {
             if ( !finished )
             {
-                String nextTestName = socketCommunicationEngine.sendRequest( "GetNext" );
+                String nextTestName = waitForNextTest();
                 if ( nothingMoreToProcess( nextTestName ) )
                 {
                     finished = true;
-                }
-                else if ( justWait( nextTestName ) )
-                {
-                    sleep( WAIT_STEP_SECONDS );
                 }
                 else
                 {
@@ -76,6 +72,17 @@ public class LazySocketTestToRun
         }
     }
 
+    private String waitForNextTest ( )
+    {
+        String nextTestName = socketCommunicationEngine.sendRequest( "GetNext" );
+        while ( justWait( nextTestName ) )
+        {
+            sleep( WAIT_STEP_SECONDS );
+            nextTestName = socketCommunicationEngine.sendRequest( "GetNext" );
+        }
+        return nextTestName;
+    }
+
     private boolean justWait( String testName )
     {
         return SocketCommunicationEngine.JUST_WAIT.equals( testName );
@@ -83,7 +90,7 @@ public class LazySocketTestToRun
 
     private void sleep( int sec )
     {
-        System.out.println( String.format( "Received '%s', sleeping %d seconds",
+        System.out.println( String.format( "TEST CLIENT: Received '%s', sleeping %d seconds",
                 SocketCommunicationEngine.JUST_WAIT, sec ) );
         try
         {
